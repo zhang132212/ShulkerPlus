@@ -54,51 +54,7 @@ shulkerplus.use    # 默认所有人可用
 
 ### 编译 mod
 
-1. 克隆 [kyrptonaught/quickshulker](https://github.com/kyrptonaught/quickshulker)
-2. 修改 `src/main/java/net/kyrptonaught/quickshulker/mixin/ItemMixin.java`
-
-三处改动均是把原来的"同时发包+本地执行"改成"客户端只发包、服务端才本地执行"：
-
-**改法 1 — `onClicked` 的 bundle 插入分支：**
-```java
-// 找到 supportsBundlingInsert 那块的 if-else
-// 原始：发完包后无论客户端服务端都调用 bundleItemIntoStack
-// 改为：
-if (player.getEntityWorld().isClient()) {
-    if (slot.inventory instanceof PlayerInventory) {
-        QuickBundlePacket.sendPacket(ClientUtil.getPlayerInvSlot(player.currentScreenHandler, slot), insertStack);
-    }
-} else {
-    BundleHelper.bundleItemIntoStack(player, hostStack, insertStack, cir);
-}
-```
-
-**改法 2 — `onStackClicked` 的 bundleHeld 分支：**
-```java
-// 找到 supportsBundlingPickup 那块的 if-else，同原理改为 client 发包 / server 执行
-if (player.getEntityWorld().isClient()) {
-    if (slot.inventory instanceof PlayerInventory) {
-        QuickBundlePacket.BundleIntoHeld.sendPacket(insertStack, hostStack, ClientUtil.getPlayerInvSlot(player.currentScreenHandler, slot));
-    }
-} else {
-    // 保持原有 server 端逻辑不变
-}
-```
-
-**改法 3 — `onStackClicked` 的 unbundle 分支：**
-```java
-// 找到 supportsBundlingExtract 那块，同上
-if (player.getEntityWorld().isClient()) {
-    if (slot.inventory instanceof PlayerInventory) {
-        QuickBundlePacket.UnbundlePacket.sendPacket(ClientUtil.getPlayerInvSlot(player.currentScreenHandler, slot), hostStack);
-    }
-} else {
-    // 保持原有 server 端逻辑不变
-}
-```
-
-3. 编译：`./gradlew build`
-4. jar 在 `build/libs/`，放入客户端 `.minecraft/mods/`
+修改版 Fabric mod 已通过 GitHub Actions 自动构建，修改内容同 [kyrptonaught/quickshulker](https://github.com/kyrptonaught/quickshulker) 的 `ItemMixin.java`（三处改动：客户端只发包不执行、服务端执行）。到仓库 **Actions** 标签手动触发 **Build QuickShulker Fabric Mod** 即可下载 JAR，放入客户端 `.minecraft/mods/`。
 
 ## 依赖
 
