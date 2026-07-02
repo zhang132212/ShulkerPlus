@@ -4,8 +4,8 @@ on:
   workflow_dispatch:
     inputs:
       ref:
-        description: 'quickshulker 分支/tag (默认 1.19)'
-        default: '1.19'
+        description: 'quickshulker 分支/tag (默认 1.21)'
+        default: '1.21'
         required: false
 
 jobs:
@@ -15,28 +15,26 @@ jobs:
       - name: Checkout quickshulker
         uses: actions/checkout@v4
         with:
-          repository: kyrptonaught/quickshulker
-          ref: ${{ github.event.inputs.ref || '1.19' }}
+          repository: Haocen2004/quickshulker
+          ref: ${{ github.event.inputs.ref || '1.21' }}
           path: quickshulker
 
-      - name: Set up JDK 17
+      - name: Set up JDK 21
         uses: actions/setup-java@v4
         with:
-          java-version: '17'
+          java-version: '21'
           distribution: 'temurin'
 
       - name: Apply modifications to ItemMixin.java
         run: |
           cat << 'PYEOF' > /tmp/patch.py
-          import re
-
           with open('src/main/java/net/kyrptonaught/quickshulker/mixin/ItemMixin.java', 'r') as f:
               content = f.read()
 
           # ── 修改 1: onClicked — bundle 插入 ──
           old1 = (
               'if (BundleHelper.shouldAttemptBundle(player, clickType, hostStack, insertStack, QuickShulkerMod.getConfig().supportsBundlingInsert)) {\n'
-              '            if (!player.world.isClient) {\n'
+              '            if (!player.getWorld().isClient) {\n'
               '                BundleHelper.bundleItemIntoStack(player, hostStack, insertStack, cir);\n'
               '            } else if (slot.inventory instanceof PlayerInventory && ClientUtil.isCreativeScreen(player)) {//stupid creative menu shiz\n'
               '                QuickBundlePacket.sendPacket(ClientUtil.getPlayerInvSlot(player.currentScreenHandler, slot), insertStack);\n'
@@ -46,7 +44,7 @@ jobs:
           )
           new1 = (
               'if (BundleHelper.shouldAttemptBundle(player, clickType, hostStack, insertStack, QuickShulkerMod.getConfig().supportsBundlingInsert)) {\n'
-              '            if (player.world.isClient) {\n'
+              '            if (player.getWorld().isClient) {\n'
               '                if (slot.inventory instanceof PlayerInventory) {\n'
               '                    QuickBundlePacket.sendPacket(ClientUtil.getPlayerInvSlot(player.currentScreenHandler, slot), insertStack);\n'
               '                }\n'
@@ -59,8 +57,9 @@ jobs:
           # ── 修改 2: onStackClicked — bundleHeld ──
           old2 = (
               'if (BundleHelper.shouldAttemptBundle(player, clickType, hostStack, insertStack, QuickShulkerMod.getConfig().supportsBundlingPickup)) {//bundle stack into held item\n'
-              '            if (!player.world.isClient) {\n'
+              '            if (!player.getWorld().isClient) {\n'
               '                BundleHelper.bundleItemIntoStack(player, hostStack, insertStack, cir);\n'
+              '                slot.onTakeItem(player, insertStack);\n'
               '            } else if (slot.inventory instanceof PlayerInventory && ClientUtil.isCreativeScreen(player)) { //stupid creative menu shiz\n'
               '                QuickBundlePacket.BundleIntoHeld.sendPacket(insertStack, hostStack);\n'
               '                BundleHelper.bundleItemIntoStack(player, hostStack, insertStack, cir);\n'
@@ -70,12 +69,13 @@ jobs:
           )
           new2 = (
               'if (BundleHelper.shouldAttemptBundle(player, clickType, hostStack, insertStack, QuickShulkerMod.getConfig().supportsBundlingPickup)) {//bundle stack into held item\n'
-              '            if (player.world.isClient) {\n'
+              '            if (player.getWorld().isClient) {\n'
               '                if (slot.inventory instanceof PlayerInventory) {\n'
               '                    QuickBundlePacket.BundleIntoHeld.sendPacket(insertStack, hostStack);\n'
               '                }\n'
               '            } else {\n'
               '                BundleHelper.bundleItemIntoStack(player, hostStack, insertStack, cir);\n'
+              '                slot.onTakeItem(player, insertStack);\n'
               '            }\n'
               '        }'
           )
@@ -83,19 +83,21 @@ jobs:
           # ── 修改 3: onStackClicked — unbundle ──
           old3 = (
               'else if (BundleHelper.shouldAttemptUnBundle(player, clickType, hostStack, insertStack, QuickShulkerMod.getConfig().supportsBundlingExtract)) {//unbundle held stack into slot\n'
-              '            if (!player.world.isClient) {\n'
+              '            if (!slot.canInsert(ItemStack.EMPTY)) return;\n'
+              '            if (!player.getWorld().isClient) {\n'
               '                BundleHelper.unbundleStackIntoSlot(player, hostStack, slot, cir);\n'
               '            } else if (slot.inventory instanceof PlayerInventory && ClientUtil.isCreativeScreen(player)) { //stupid creative menu shiz\n'
-              '                QuickBundlePacket.Unbundle.sendPacket(ClientUtil.getPlayerInvSlot(player.currentScreenHandler, slot), hostStack);\n'
+              '                QuickBundlePacket.UnBundlePacket.sendPacket(ClientUtil.getPlayerInvSlot(player.currentScreenHandler, slot), hostStack);\n'
               '                BundleHelper.unbundleStackIntoSlot(player, hostStack, slot, cir);\n'
               '            }\n'
               '        }'
           )
           new3 = (
               'else if (BundleHelper.shouldAttemptUnBundle(player, clickType, hostStack, insertStack, QuickShulkerMod.getConfig().supportsBundlingExtract)) {//unbundle held stack into slot\n'
-              '            if (player.world.isClient) {\n'
+              '            if (!slot.canInsert(ItemStack.EMPTY)) return;\n'
+              '            if (player.getWorld().isClient) {\n'
               '                if (slot.inventory instanceof PlayerInventory) {\n'
-              '                    QuickBundlePacket.Unbundle.sendPacket(ClientUtil.getPlayerInvSlot(player.currentScreenHandler, slot), hostStack);\n'
+              '                    QuickBundlePacket.UnBundlePacket.sendPacket(ClientUtil.getPlayerInvSlot(player.currentScreenHandler, slot), hostStack);\n'
               '                }\n'
               '            } else {\n'
               '                BundleHelper.unbundleStackIntoSlot(player, hostStack, slot, cir);\n'

@@ -54,7 +54,7 @@ shulkerplus.use    # 默认所有人可用
 
 ### 编译 mod
 
-修改版 Fabric mod 已通过 GitHub Actions 自动构建，修改内容同 [kyrptonaught/quickshulker](https://github.com/kyrptonaught/quickshulker) 的 `ItemMixin.java`（三处改动：客户端只发包不执行、服务端执行）。到仓库 **Actions** 标签手动触发 **Build QuickShulker Fabric Mod** 即可下载 JAR，放入客户端 `.minecraft/mods/`。
+修改版 Fabric mod 已通过 GitHub Actions 自动构建，基于 [Haocen2004/quickshulker](https://github.com/Haocen2004/quickshulker)（1.21 分支）修改 `ItemMixin.java`（三处改动：客户端只发包不执行、服务端执行）。到仓库 **Actions** 标签手动触发 **Build QuickShulker Fabric Mod** 即可下载 JAR，放入客户端 `.minecraft/mods/`。
 
 ## 依赖
 
