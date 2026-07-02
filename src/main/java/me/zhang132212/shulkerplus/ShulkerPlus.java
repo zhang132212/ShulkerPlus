@@ -250,7 +250,20 @@ public class ShulkerPlus extends JavaPlugin implements Listener, PluginMessageLi
 
     private boolean tryBundle(InventoryClickEvent event, Player player) {
         if (event.getClick() != ClickType.RIGHT) return false;
-        if (event.getClickedInventory() != event.getView().getBottomInventory()) return false;
+
+        boolean clickedBottom = event.getClickedInventory() == event.getView().getBottomInventory();
+        boolean clickedTop = event.getClickedInventory() == event.getView().getTopInventory();
+        if (!clickedBottom && !clickedTop) return false;
+
+        // Guard: don't allow bundle mode on our own virtual shulker UI
+        if (clickedTop) {
+            Session session = sessions.get(player.getUniqueId());
+            if (session != null && session.virtualInv != null
+                    && event.getClickedInventory().equals(session.virtualInv)) {
+                return false;
+            }
+        }
+
         ItemStack cursor = event.getCursor();
         ItemStack current = event.getCurrentItem();
         boolean cursorIsShulker = cursor != null && SHULKER_BOXES.contains(cursor.getType());
@@ -263,8 +276,8 @@ public class ShulkerPlus extends JavaPlugin implements Listener, PluginMessageLi
             bundleInsert(cursor, current);
             return true;
         }
-        // Extract: cursor has shulker, clicked slot is empty
-        if (cursorIsShulker && (current == null || current.getType().isAir())) {
+        // Extract: cursor has shulker, clicked slot is empty (bottom inventory only)
+        if (clickedBottom && cursorIsShulker && (current == null || current.getType().isAir())) {
             event.setCancelled(true);
             int slot = event.getSlot();
             bundleExtract(player, cursor, slot);
