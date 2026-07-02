@@ -1,5 +1,5 @@
 name: ShulkerPlus
-version: "3.0.0"
+version: "${version}"
 main: me.zhang132212.shulkerplus.ShulkerPlus
 softdepend: [ProtocolLib]
 api-version: "1.21"
