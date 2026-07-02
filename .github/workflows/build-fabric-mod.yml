@@ -121,7 +121,7 @@ jobs:
         working-directory: quickshulker
 
       - name: Build with Gradle
-        run: chmod +x gradlew && ./gradlew build
+        run: chmod +x gradlew && rm -rf .gradle/loom-cache && ./gradlew build --no-daemon
         working-directory: quickshulker
 
       - name: Upload artifact
