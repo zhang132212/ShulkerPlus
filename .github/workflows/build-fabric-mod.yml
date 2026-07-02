@@ -125,6 +125,7 @@ jobs:
           chmod +x gradlew
           rm -rf .gradle build
           sed -i "s/id 'fabric-loom' version '1.6-SNAPSHOT'/id 'fabric-loom' version '1.7-SNAPSHOT'/" build.gradle
+          ./gradlew wrapper --gradle-version 8.8 --no-daemon
           ./gradlew build --no-daemon
         working-directory: quickshulker
 
