@@ -1,10 +1,10 @@
 name: ShulkerPlus
 version: "3.0.0"
-main: me.jorbay.shulkerplus.ShulkerPlus
+main: me.zhang132212.shulkerplus.ShulkerPlus
 softdepend: [ProtocolLib]
 api-version: "1.21"
 description: Open shulker boxes, workbench, and stonecutter from hand with nested UI support.
-author: jorbay
+author: zhang132212
 
 permissions:
   shulkerplus.use:

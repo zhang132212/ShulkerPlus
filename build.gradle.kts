@@ -2,7 +2,7 @@ plugins {
     `java-library`
 }
 
-group = "me.jorbay"
+group = "me.zhang132212"
 version = "3.0.0"
 
 repositories {

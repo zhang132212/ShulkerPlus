@@ -1,4 +1,4 @@
-package me.jorbay.shulkerplus;
+package me.zhang132212.shulkerplus;
 
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;

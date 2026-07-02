@@ -105,6 +105,10 @@ if (player.getEntityWorld().isClient()) {
 - Paper 1.21.x（使用 NMS `CraftingMenu` / `StonecutterMenu`）
 - ProtocolLib（不再需要，已移除）
 
+## 致谢
+
+本项目功能参考 [jorbay/ShulkerPlus](https://modrinth.com/plugin/shulker-plus)（闭源，ARR），独立实现。感谢原作者的创意。
+
 ## 许可证
 
 MIT

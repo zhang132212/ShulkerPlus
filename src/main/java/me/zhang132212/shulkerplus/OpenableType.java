@@ -1,4 +1,4 @@
-package me.jorbay.shulkerplus;
+package me.zhang132212.shulkerplus;
 
 public enum OpenableType {
     SHULKER,
