@@ -121,7 +121,11 @@ jobs:
         working-directory: quickshulker
 
       - name: Build with Gradle
-        run: chmod +x gradlew && rm -rf .gradle/loom-cache && ./gradlew build --no-daemon
+        run: |
+          chmod +x gradlew
+          rm -rf .gradle build
+          sed -i "s/id 'fabric-loom' version '1.6-SNAPSHOT'/id 'fabric-loom' version '1.7-SNAPSHOT'/" build.gradle
+          ./gradlew build --no-daemon
         working-directory: quickshulker
 
       - name: Upload artifact
