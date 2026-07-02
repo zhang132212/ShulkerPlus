@@ -1,0 +1,9 @@
+require-sneak: true
+play-sounds: true
+close-on-move: true
+cooldown-ms: 500
+
+enable-workbench: true
+enable-stonecutter: true
+enable-nested-opening: true
+enable-bundle-mode: false

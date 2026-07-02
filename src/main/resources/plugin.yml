@@ -1,0 +1,12 @@
+name: ShulkerPlus
+version: "3.0.0"
+main: me.jorbay.shulkerplus.ShulkerPlus
+softdepend: [ProtocolLib]
+api-version: "1.21"
+description: Open shulker boxes, workbench, and stonecutter from hand with nested UI support.
+author: jorbay
+
+permissions:
+  shulkerplus.use:
+    description: Allows opening items from hand
+    default: true
