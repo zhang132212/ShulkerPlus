@@ -276,11 +276,12 @@ public class ShulkerPlus extends JavaPlugin implements Listener, PluginMessageLi
             bundleInsert(cursor, current);
             return true;
         }
-        // Extract: cursor has shulker, clicked slot is empty (bottom inventory only)
-        if (clickedBottom && cursorIsShulker && (current == null || current.getType().isAir())) {
+        // Extract: cursor has shulker, clicked slot is empty
+        if (cursorIsShulker && (current == null || current.getType().isAir())) {
             event.setCancelled(true);
             int slot = event.getSlot();
-            bundleExtract(player, cursor, slot);
+            Inventory targetInv = clickedBottom ? player.getInventory() : event.getClickedInventory();
+            bundleExtract(player, cursor, targetInv, slot);
             return true;
         }
         // Insert reverse: cursor has item, clicked slot is shulker
@@ -326,7 +327,7 @@ public class ShulkerPlus extends JavaPlugin implements Listener, PluginMessageLi
         toInsert.setAmount(remaining);
     }
 
-    private void bundleExtract(Player player, ItemStack shulker, int targetSlot) {
+    private void bundleExtract(Player player, ItemStack shulker, Inventory targetInv, int targetSlot) {
         ItemMeta meta = shulker.getItemMeta();
         if (!(meta instanceof BlockStateMeta bsm)) return;
         if (!(bsm.getBlockState() instanceof ShulkerBox box)) return;
@@ -350,8 +351,8 @@ public class ShulkerPlus extends JavaPlugin implements Listener, PluginMessageLi
         bsm.setBlockState(box);
         shulker.setItemMeta(bsm);
 
-        if (targetSlot < 0 || targetSlot >= 36) return;
-        player.getInventory().setItem(targetSlot, extracted);
+        if (targetSlot < 0 || targetSlot >= targetInv.getSize()) return;
+        targetInv.setItem(targetSlot, extracted);
     }
 
     // ─── Unified open entry ─────────────────────────────────────
