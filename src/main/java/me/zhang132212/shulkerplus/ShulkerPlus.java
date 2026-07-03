@@ -36,6 +36,7 @@ public class ShulkerPlus extends JavaPlugin implements Listener, PluginMessageLi
 
     private NamespacedKey itemKey;
     private final Map<UUID, Session> sessions = new HashMap<>();
+    private final Map<UUID, Session> closingSessions = new HashMap<>();
     private final Map<UUID, Long> cooldowns = new HashMap<>();
     private BukkitTask cleanupTask;
 
@@ -501,6 +502,16 @@ public class ShulkerPlus extends JavaPlugin implements Listener, PluginMessageLi
     public void onClick(InventoryClickEvent event) {
         if (!(event.getWhoClicked() instanceof Player player)) return;
 
+        // Block itemscroller race: recently closed session, still getting auto-move packets
+        Session closing = closingSessions.get(player.getUniqueId());
+        if (closing != null) {
+            if (event.getAction() == InventoryAction.MOVE_TO_OTHER_INVENTORY ||
+                event.getAction() == InventoryAction.HOTBAR_SWAP) {
+                event.setCancelled(true);
+                return;
+            }
+        }
+
         if (enableBundleMode && tryBundle(event, player)) return;
 
         Session session = sessions.get(player.getUniqueId());
@@ -790,9 +801,14 @@ public class ShulkerPlus extends JavaPlugin implements Listener, PluginMessageLi
 
         syncToSource(player, session);
 
+        // Keep session alive briefly to block in-flight itemscroller auto-move packets
+        UUID playerId = player.getUniqueId();
+        closingSessions.put(playerId, session);
+        Bukkit.getScheduler().runTaskLater(this, () -> closingSessions.remove(playerId), 2L);
+
         if (!session.uiStack.isEmpty()) {
             UIContext prev = session.uiStack.pop();
-            sessions.remove(player.getUniqueId());
+            sessions.remove(playerId);
 
             if (prev.isVanilla) {
                 Bukkit.getScheduler().runTask(this, () -> {
@@ -817,7 +833,7 @@ public class ShulkerPlus extends JavaPlugin implements Listener, PluginMessageLi
                 }
             });
         } else {
-            sessions.remove(player.getUniqueId());
+            sessions.remove(playerId);
             if (session.type == OpenableType.SHULKER && playSounds) {
                 player.playSound(player.getLocation(),
                     Sound.BLOCK_SHULKER_BOX_CLOSE, 1f, 1f);
