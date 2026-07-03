@@ -448,7 +448,7 @@ public class ShulkerPlus extends JavaPlugin implements Listener, PluginMessageLi
             openItem(player, type, item, hotbarSlot, hand));
     }
 
-    @EventHandler
+    @EventHandler(priority = EventPriority.LOWEST)
     public void onClick(InventoryClickEvent event) {
         if (!(event.getWhoClicked() instanceof Player player)) return;
 
