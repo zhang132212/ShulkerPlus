@@ -703,18 +703,16 @@ public class ShulkerPlus extends JavaPlugin implements Listener, PluginMessageLi
 
         if (isPlayerOwnInventory) {
             int slot = findSlotInInventory(player, finalItem);
-            int hotbarSlot = (slot >= 0 && slot <= 8) ? slot :
-                player.getInventory().getHeldItemSlot();
+            EquipmentSlot hand = (slot == 40) ? EquipmentSlot.OFF_HAND : EquipmentSlot.HAND;
+            int hotbarSlot = (slot == 40) ? -1 : slot;
             player.closeInventory();
             Bukkit.getScheduler().runTask(this, () ->
-                openItem(player, type, finalItem, hotbarSlot, EquipmentSlot.HAND));
+                openItem(player, type, finalItem, hotbarSlot, hand));
         } else {
             InventoryView vanillaView = event.getView();
             int slot = findSlotInInventory(player, finalItem);
-            EquipmentSlot hand = (slot >= 0 && slot <= 8) ? EquipmentSlot.HAND :
-                (slot == 40 ? EquipmentSlot.OFF_HAND : EquipmentSlot.HAND);
-            int hotbarSlot = (slot >= 0 && slot <= 8) ? slot :
-                player.getInventory().getHeldItemSlot();
+            EquipmentSlot hand = (slot == 40) ? EquipmentSlot.OFF_HAND : EquipmentSlot.HAND;
+            int hotbarSlot = (slot == 40) ? -1 : slot;
             player.closeInventory();
             Bukkit.getScheduler().runTask(this, () -> {
                 UUID itemId = getOrCreateItemId(finalItem);
