@@ -167,8 +167,50 @@ public class ShulkerPlus extends JavaPlugin implements Listener, PluginMessageLi
     private void syncToSource(Player player, Session session) {
         if (session.type != OpenableType.SHULKER || session.virtualInv == null) return;
         ItemStack current = findSourceItem(player, session);
+        // Safety net: if source item was moved, recover it by UUID
+        if (current == null) current = recoverSourceItem(player, session);
         if (current == null) return;
         syncShulkerItems(current, session.virtualInv);
+    }
+
+    private ItemStack recoverSourceItem(Player player, Session session) {
+        UUID targetId = session.itemId;
+
+        // 1) Check if the source item ended up inside the virtual GUI
+        Inventory vInv = session.virtualInv;
+        for (int i = 0; i < vInv.getSize(); i++) {
+            ItemStack item = vInv.getItem(i);
+            if (item != null && targetId.equals(getItemId(item))) {
+                ItemStack recovered = item.clone();
+                vInv.setItem(i, null);
+                restoreToSourceSlot(player, session, recovered);
+                return player.getInventory().getItem(getSourceSlot(session));
+            }
+        }
+
+        // 2) Check player inventory (it may have been moved to another slot)
+        for (int i = 0; i < 36; i++) {
+            ItemStack item = player.getInventory().getItem(i);
+            if (item != null && targetId.equals(getItemId(item))) {
+                return item;
+            }
+        }
+
+        // 3) Check offhand
+        ItemStack offhand = player.getInventory().getItemInOffHand();
+        if (offhand != null && targetId.equals(getItemId(offhand))) {
+            return offhand;
+        }
+
+        return null;
+    }
+
+    private void restoreToSourceSlot(Player player, Session session, ItemStack item) {
+        player.getInventory().setItem(getSourceSlot(session), item);
+    }
+
+    private int getSourceSlot(Session session) {
+        return session.equipmentSlot == EquipmentSlot.HAND ? session.hotbarSlot : 40;
     }
 
     private ItemStack findSourceItem(Player player, Session session) {
