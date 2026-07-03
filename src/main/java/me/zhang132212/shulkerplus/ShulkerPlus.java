@@ -479,6 +479,18 @@ public class ShulkerPlus extends JavaPlugin implements Listener, PluginMessageLi
         Inventory clicked = event.getClickedInventory();
         if (clicked == null) return;
 
+        // Lock source item: prevent ANY interaction while its GUI is open
+        if (clicked.equals(event.getView().getBottomInventory())) {
+            ItemStack clickedItem = event.getCurrentItem();
+            if (clickedItem != null) {
+                UUID clickedId = getItemId(clickedItem);
+                if (clickedId != null && clickedId.equals(session.itemId)) {
+                    event.setCancelled(true);
+                    return;
+                }
+            }
+        }
+
         // Prevent shulker-into-shulker
         if (session.type == OpenableType.SHULKER) {
             // (a) Clicking in virtual inv: prevent putting shulker from cursor
