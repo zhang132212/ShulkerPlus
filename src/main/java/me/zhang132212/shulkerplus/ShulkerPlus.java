@@ -178,11 +178,28 @@ public class ShulkerPlus extends JavaPlugin implements Listener, PluginMessageLi
         return inv.getItemInOffHand();
     }
 
+    private UUID getItemId(ItemStack item) {
+        if (item == null || !item.hasItemMeta()) return null;
+        PersistentDataContainer pdc = item.getItemMeta().getPersistentDataContainer();
+        if (pdc.has(itemKey, PersistentDataType.STRING)) {
+            try {
+                return UUID.fromString(pdc.get(itemKey, PersistentDataType.STRING));
+            } catch (IllegalArgumentException ignored) {}
+        }
+        return null;
+    }
+
     private int findSlotInInventory(Player player, ItemStack target) {
+        UUID targetId = getItemId(target);
         ItemStack[] contents = player.getInventory().getContents();
         for (int i = 0; i < contents.length; i++) {
-            if (contents[i] != null && contents[i].equals(target)) {
-                return i;
+            if (contents[i] != null) {
+                if (targetId != null && targetId.equals(getItemId(contents[i]))) {
+                    return i;
+                }
+                if (targetId == null && contents[i].equals(target)) {
+                    return i;
+                }
             }
         }
         return -1;
@@ -255,11 +272,14 @@ public class ShulkerPlus extends JavaPlugin implements Listener, PluginMessageLi
         boolean clickedTop = event.getClickedInventory() == event.getView().getTopInventory();
         if (!clickedBottom && !clickedTop) return false;
 
-        // Guard: don't allow bundle mode on our own virtual shulker UI
+        // Guard: don't allow bundle mode on our own virtual shulker UI or ender chest
         if (clickedTop) {
             Session session = sessions.get(player.getUniqueId());
             if (session != null && session.virtualInv != null
                     && event.getClickedInventory().equals(session.virtualInv)) {
+                return false;
+            }
+            if (event.getView().getTopInventory().getType() == InventoryType.ENDER_CHEST) {
                 return false;
             }
         }
@@ -274,6 +294,7 @@ public class ShulkerPlus extends JavaPlugin implements Listener, PluginMessageLi
                 && !SHULKER_BOXES.contains(current.getType())) {
             event.setCancelled(true);
             bundleInsert(cursor, current);
+            if (clickedTop) event.getClickedInventory().setItem(event.getSlot(), current);
             return true;
         }
         // Extract: cursor has shulker, clicked slot is empty
@@ -288,6 +309,7 @@ public class ShulkerPlus extends JavaPlugin implements Listener, PluginMessageLi
         if (!cursorIsShulker && currentIsShulker && cursor != null && !cursor.getType().isAir()) {
             event.setCancelled(true);
             bundleInsert(current, cursor);
+            if (clickedTop) event.getClickedInventory().setItem(event.getSlot(), current);
             return true;
         }
         return false;
@@ -677,6 +699,14 @@ public class ShulkerPlus extends JavaPlugin implements Listener, PluginMessageLi
         if (session == null || session.type != OpenableType.SHULKER) return;
         if (session.virtualInv == null) return;
         if (!event.getInventory().equals(session.virtualInv)) return;
+
+        // Prevent shulker-into-shulker via drag
+        for (ItemStack item : event.getNewItems().values()) {
+            if (item != null && SHULKER_BOXES.contains(item.getType())) {
+                event.setCancelled(true);
+                return;
+            }
+        }
 
         Bukkit.getScheduler().runTask(this, () -> {
             Session s = sessions.get(player.getUniqueId());
