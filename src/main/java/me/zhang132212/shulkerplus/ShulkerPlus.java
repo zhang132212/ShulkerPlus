@@ -554,7 +554,6 @@ public class ShulkerPlus extends JavaPlugin implements Listener, PluginMessageLi
 
     private void handleClickInNmsUI(InventoryClickEvent event, Player player, Session session) {
         // NMS menus (workbench/stonecutter) handle crafting natively.
-        // We only prevent clicking the inventory slot that holds the source item.
         if (event.getClickedInventory() == event.getView().getBottomInventory()) {
             ItemStack clickedItem = event.getCurrentItem();
             if (isOpenable(clickedItem) && event.getCursor().getType().isAir()
@@ -564,15 +563,11 @@ public class ShulkerPlus extends JavaPlugin implements Listener, PluginMessageLi
 
                 event.setCancelled(true);
                 int slot = findSlotInInventory(player, clickedItem);
-                UUID itemId = getOrCreateItemId(clickedItem);
-                Session newSession = new Session(newType, session.equipmentSlot,
-                    null, clickedItem, slot, itemId);
-                newSession.uiStack = session.uiStack;
+                Session newSession = createNestedSession(player, newType, clickedItem, slot, session);
 
                 player.closeInventory();
-                Bukkit.getScheduler().runTask(this, () -> {
-                    openItemFromSession(player, newType, newSession, clickedItem, slot);
-                });
+                Bukkit.getScheduler().runTask(this, () ->
+                    openItemFromSession(player, newType, newSession, clickedItem, slot));
             }
         }
     }
