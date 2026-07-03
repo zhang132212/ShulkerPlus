@@ -4,7 +4,7 @@ plugins {
 }
 
 group = "me.zhang132212"
-version = "3.1.2"
+version = "3.1.3"
 
 dependencies {
     paperweight.paperDevBundle("1.21.11-R0.1-SNAPSHOT")

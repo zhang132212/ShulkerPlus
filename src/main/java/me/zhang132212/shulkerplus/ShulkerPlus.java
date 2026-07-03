@@ -175,6 +175,7 @@ public class ShulkerPlus extends JavaPlugin implements Listener, PluginMessageLi
 
     private ItemStack recoverSourceItem(Player player, Session session) {
         UUID targetId = session.itemId;
+        int sourceSlot = getSourceSlot(session);
 
         // 1) Check if the source item ended up inside the virtual GUI
         Inventory vInv = session.virtualInv;
@@ -183,30 +184,35 @@ public class ShulkerPlus extends JavaPlugin implements Listener, PluginMessageLi
             if (item != null && targetId.equals(getItemId(item))) {
                 ItemStack recovered = item.clone();
                 vInv.setItem(i, null);
-                restoreToSourceSlot(player, session, recovered);
-                return player.getInventory().getItem(getSourceSlot(session));
+                player.getInventory().setItem(sourceSlot, recovered);
+                return recovered;
             }
         }
 
-        // 2) Check player inventory (it may have been moved to another slot)
+        // 2) Check player inventory (may have been moved to another slot)
         for (int i = 0; i < 36; i++) {
+            if (i == sourceSlot) continue;
             ItemStack item = player.getInventory().getItem(i);
             if (item != null && targetId.equals(getItemId(item))) {
-                return item;
+                ItemStack moved = item.clone();
+                player.getInventory().setItem(i, null);
+                player.getInventory().setItem(sourceSlot, moved);
+                return moved;
             }
         }
 
         // 3) Check offhand
-        ItemStack offhand = player.getInventory().getItemInOffHand();
-        if (offhand != null && targetId.equals(getItemId(offhand))) {
-            return offhand;
+        if (sourceSlot != 40) {
+            ItemStack offhand = player.getInventory().getItemInOffHand();
+            if (offhand != null && targetId.equals(getItemId(offhand))) {
+                ItemStack moved = offhand.clone();
+                player.getInventory().setItemInOffHand(null);
+                player.getInventory().setItem(sourceSlot, moved);
+                return moved;
+            }
         }
 
         return null;
-    }
-
-    private void restoreToSourceSlot(Player player, Session session, ItemStack item) {
-        player.getInventory().setItem(getSourceSlot(session), item);
     }
 
     private int getSourceSlot(Session session) {
