@@ -458,17 +458,33 @@ public class ShulkerPlus extends JavaPlugin implements Listener, PluginMessageLi
         if (clicked == null) return;
 
         // Prevent shulker-into-shulker
-        if (session.type == OpenableType.SHULKER && clicked.equals(session.virtualInv)) {
-            ItemStack cursor = event.getCursor();
-            ItemStack current = event.getCurrentItem();
-            if ((cursor != null && SHULKER_BOXES.contains(cursor.getType())) ||
-                (current != null && SHULKER_BOXES.contains(current.getType()))) {
-                if (event.getAction() == InventoryAction.PLACE_ALL ||
-                    event.getAction() == InventoryAction.PLACE_ONE ||
-                    event.getAction() == InventoryAction.PLACE_SOME ||
-                    event.getAction() == InventoryAction.SWAP_WITH_CURSOR) {
-                    event.setCancelled(true);
-                    return;
+        if (session.type == OpenableType.SHULKER) {
+            // (a) Clicking in virtual inv: prevent putting shulker from cursor
+            if (clicked.equals(session.virtualInv)) {
+                ItemStack cursor = event.getCursor();
+                ItemStack current = event.getCurrentItem();
+                if ((cursor != null && SHULKER_BOXES.contains(cursor.getType())) ||
+                    (current != null && SHULKER_BOXES.contains(current.getType()))) {
+                    if (event.getAction() == InventoryAction.PLACE_ALL ||
+                        event.getAction() == InventoryAction.PLACE_ONE ||
+                        event.getAction() == InventoryAction.PLACE_SOME ||
+                        event.getAction() == InventoryAction.SWAP_WITH_CURSOR) {
+                        event.setCancelled(true);
+                        return;
+                    }
+                }
+            }
+            // (b) Clicking in bottom inv: prevent shift-click/hotbar-swap of any
+            //     shulker from player inventory into the open virtual shulker GUI
+            if (clicked.equals(event.getView().getBottomInventory())) {
+                ItemStack clickedItem = event.getCurrentItem();
+                if (clickedItem != null && SHULKER_BOXES.contains(clickedItem.getType())) {
+                    if (event.getAction() == InventoryAction.MOVE_TO_OTHER_INVENTORY ||
+                        event.getAction() == InventoryAction.HOTBAR_SWAP ||
+                        event.getAction() == InventoryAction.HOTBAR_MOVE_AND_READD) {
+                        event.setCancelled(true);
+                        return;
+                    }
                 }
             }
         }
