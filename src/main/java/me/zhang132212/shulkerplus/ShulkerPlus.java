@@ -581,8 +581,13 @@ public class ShulkerPlus extends JavaPlugin implements Listener, PluginMessageLi
         Inventory clicked = event.getClickedInventory();
         if (clicked == null) return;
 
-        // Lock source item: prevent ANY interaction while its GUI is open
+        // Lock source item by slot position (primary – no PDC dependency)
         if (clicked.equals(event.getView().getBottomInventory())) {
+            if (event.getSlot() == getSourceSlot(session)) {
+                event.setCancelled(true);
+                return;
+            }
+            // Fallback: UUID check
             ItemStack clickedItem = event.getCurrentItem();
             if (clickedItem != null) {
                 UUID clickedId = getItemId(clickedItem);
@@ -637,6 +642,11 @@ public class ShulkerPlus extends JavaPlugin implements Listener, PluginMessageLi
     private void handleClickInNmsUI(InventoryClickEvent event, Player player, Session session) {
         // Lock source item: prevent ANY interaction while its GUI is open
         if (event.getClickedInventory() == event.getView().getBottomInventory()) {
+            if (event.getSlot() == getSourceSlot(session)) {
+                event.setCancelled(true);
+                return;
+            }
+            // Fallback: UUID check
             ItemStack clickedItem = event.getCurrentItem();
             if (clickedItem != null) {
                 UUID clickedId = getItemId(clickedItem);
