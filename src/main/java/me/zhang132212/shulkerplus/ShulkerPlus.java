@@ -9,8 +9,6 @@ import net.minecraft.world.inventory.ContainerLevelAccess;
 import net.minecraft.world.inventory.CraftingMenu;
 import net.minecraft.world.inventory.MenuType;
 import net.minecraft.world.inventory.StonecutterMenu;
-import net.minecraft.world.item.BlockItem;
-import net.minecraft.world.level.block.ShulkerBoxBlock;
 import org.bukkit.*;
 import org.bukkit.block.ShulkerBox;
 import org.bukkit.craftbukkit.entity.CraftPlayer;
@@ -449,11 +447,7 @@ public class ShulkerPlus extends JavaPlugin implements Listener, PluginMessageLi
         SimpleContainer nms = new SimpleContainer(27) {
             @Override
             public boolean canPlaceItem(int slot, net.minecraft.world.item.ItemStack stack) {
-                net.minecraft.world.item.Item item = stack.getItem();
-                if (item instanceof BlockItem bi) {
-                    return !(bi.getBlock() instanceof ShulkerBoxBlock);
-                }
-                return true;
+                return !SHULKER_BOXES.contains(CraftItemStack.asBukkitCopy(stack).getType());
             }
         };
 
