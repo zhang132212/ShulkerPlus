@@ -44,6 +44,7 @@ public class ShulkerPlus extends JavaPlugin implements Listener, PluginMessageLi
     private boolean playSounds;
     private boolean enableWorkbench;
     private boolean enableStonecutter;
+    private boolean enableEnderChest;
     private boolean enableNestedOpening;
     private boolean enableBundleMode;
     private boolean closeOnMove;
@@ -129,6 +130,7 @@ public class ShulkerPlus extends JavaPlugin implements Listener, PluginMessageLi
         cooldownMs = getConfig().getLong("cooldown-ms", 500L);
         enableWorkbench = getConfig().getBoolean("enable-workbench", true);
         enableStonecutter = getConfig().getBoolean("enable-stonecutter", true);
+        enableEnderChest = getConfig().getBoolean("enable-ender-chest", true);
         enableNestedOpening = getConfig().getBoolean("enable-nested-opening", true);
         enableBundleMode = getConfig().getBoolean("enable-bundle-mode", false);
     }
@@ -141,6 +143,7 @@ public class ShulkerPlus extends JavaPlugin implements Listener, PluginMessageLi
         if (SHULKER_BOXES.contains(type)) return true;
         if (enableWorkbench && type == Material.CRAFTING_TABLE) return true;
         if (enableStonecutter && type == Material.STONECUTTER) return true;
+        if (enableEnderChest && type == Material.ENDER_CHEST) return true;
         return false;
     }
 
@@ -150,6 +153,7 @@ public class ShulkerPlus extends JavaPlugin implements Listener, PluginMessageLi
         if (SHULKER_BOXES.contains(type)) return OpenableType.SHULKER;
         if (type == Material.CRAFTING_TABLE) return OpenableType.WORKBENCH;
         if (type == Material.STONECUTTER) return OpenableType.STONECUTTER;
+        if (type == Material.ENDER_CHEST) return OpenableType.ENDER_CHEST;
         return null;
     }
 
@@ -625,9 +629,18 @@ public class ShulkerPlus extends JavaPlugin implements Listener, PluginMessageLi
     }
 
     private void handleClickInNmsUI(InventoryClickEvent event, Player player, Session session) {
-        // NMS menus (workbench/stonecutter) handle crafting natively.
+        // Lock source item: prevent ANY interaction while its GUI is open
         if (event.getClickedInventory() == event.getView().getBottomInventory()) {
             ItemStack clickedItem = event.getCurrentItem();
+            if (clickedItem != null) {
+                UUID clickedId = getItemId(clickedItem);
+                if (clickedId != null && clickedId.equals(session.itemId)) {
+                    event.setCancelled(true);
+                    return;
+                }
+            }
+
+            // Nested open: right-click openable item in bottom inventory
             if (isOpenable(clickedItem) && event.getCursor().getType().isAir()
                     && event.getClick() == ClickType.RIGHT) {
                 OpenableType newType = getOpenableType(clickedItem);
@@ -680,6 +693,10 @@ public class ShulkerPlus extends JavaPlugin implements Listener, PluginMessageLi
                 break;
             case STONECUTTER:
                 openNmsStonecutter(player);
+                break;
+            case ENDER_CHEST:
+                player.openInventory(player.getEnderChest());
+                if (playSounds) player.playSound(player.getLocation(), Sound.BLOCK_ENDER_CHEST_OPEN, 1f, 1f);
                 break;
         }
     }
@@ -796,6 +813,9 @@ public class ShulkerPlus extends JavaPlugin implements Listener, PluginMessageLi
                 break;
             case STONECUTTER:
                 if (event.getInventory().getType() != InventoryType.STONECUTTER) return;
+                break;
+            case ENDER_CHEST:
+                if (event.getInventory().getType() != InventoryType.ENDER_CHEST) return;
                 break;
         }
 
