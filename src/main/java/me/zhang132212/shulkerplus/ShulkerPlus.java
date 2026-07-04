@@ -478,6 +478,10 @@ public class ShulkerPlus extends JavaPlugin implements Listener, PluginMessageLi
     private void openItem(Player player, OpenableType type, ItemStack sourceItem,
                           int hotbarSlot, EquipmentSlot hand) {
         UUID itemId = getOrCreateItemId(sourceItem);
+        // getOrCreateItemId writes to the ItemStack, but event.getItem() may return a copy.
+        // Persist back to the player's actual inventory slot so the UUID is visible to lock checks.
+        int srcSlot = (hand == EquipmentSlot.HAND) ? hotbarSlot : 40;
+        player.getInventory().setItem(srcSlot, sourceItem);
 
         Inventory virtualInv = null;
         if (type == OpenableType.SHULKER) {
