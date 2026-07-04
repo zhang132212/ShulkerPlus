@@ -598,6 +598,45 @@ public class ShulkerPlus extends JavaPlugin implements Listener, PluginMessageLi
             }
         }
 
+        // ─── Anti-nesting: block shulker boxes from entering our virtual GUI ───
+        Inventory topInv = event.getView().getTopInventory();
+        ItemStack cursor = event.getCursor();
+        ItemStack current = event.getCurrentItem();
+
+        // 1) Cursor carries a shulker box → clicking into our GUI → block
+        if (cursor != null && SHULKER_BOXES.contains(cursor.getType())
+                && clicked.equals(topInv)) {
+            event.setCancelled(true);
+            return;
+        }
+
+        // 2) Shift-click a shulker box from player inv → our GUI → block
+        if (event.getAction() == InventoryAction.MOVE_TO_OTHER_INVENTORY
+                && current != null && SHULKER_BOXES.contains(current.getType())
+                && clicked.equals(event.getView().getBottomInventory())) {
+            event.setCancelled(true);
+            return;
+        }
+
+        // 3) Number key (1-9) swaps hotbar shulker → our GUI → block
+        if (event.getClick() == ClickType.NUMBER_KEY && clicked.equals(topInv)) {
+            ItemStack hotbarItem = player.getInventory().getItem(event.getHotbarButton());
+            if (hotbarItem != null && SHULKER_BOXES.contains(hotbarItem.getType())) {
+                event.setCancelled(true);
+                return;
+            }
+        }
+
+        // 4) Swap offhand (F key) shulker → our GUI → block
+        if (event.getClick() == ClickType.SWAP_OFFHAND && clicked.equals(topInv)) {
+            ItemStack offhandItem = player.getInventory().getItemInOffHand();
+            if (offhandItem != null && SHULKER_BOXES.contains(offhandItem.getType())) {
+                event.setCancelled(true);
+                return;
+            }
+        }
+        // ─── End anti-nesting ─────────────────────────────────────────────────
+
         // Nested open
         if (enableNestedOpening && clicked.equals(event.getView().getBottomInventory())) {
             ItemStack clickedItem = event.getCurrentItem();
@@ -782,6 +821,13 @@ public class ShulkerPlus extends JavaPlugin implements Listener, PluginMessageLi
         if (session == null || session.type != OpenableType.SHULKER) return;
         if (session.virtualInv == null) return;
         if (!event.getInventory().equals(session.virtualInv)) return;
+
+        // Block dragging shulker boxes into the virtual GUI
+        ItemStack oldCursor = event.getOldCursor();
+        if (oldCursor != null && SHULKER_BOXES.contains(oldCursor.getType())) {
+            event.setCancelled(true);
+            return;
+        }
 
         Bukkit.getScheduler().runTask(this, () -> {
             Session s = sessions.get(player.getUniqueId());
