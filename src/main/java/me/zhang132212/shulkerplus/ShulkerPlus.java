@@ -4,14 +4,17 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.SimpleContainer;
 import net.minecraft.world.SimpleMenuProvider;
+import net.minecraft.world.inventory.ChestMenu;
 import net.minecraft.world.inventory.ContainerLevelAccess;
 import net.minecraft.world.inventory.CraftingMenu;
+import net.minecraft.world.inventory.MenuType;
 import net.minecraft.world.inventory.StonecutterMenu;
+import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.level.block.ShulkerBoxBlock;
 import org.bukkit.*;
 import org.bukkit.block.ShulkerBox;
 import org.bukkit.craftbukkit.entity.CraftPlayer;
-import org.bukkit.craftbukkit.inventory.CraftInventoryCustom;
+import org.bukkit.craftbukkit.inventory.CraftItemStack;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
@@ -437,26 +440,41 @@ public class ShulkerPlus extends JavaPlugin implements Listener, PluginMessageLi
     // ─── Unified open entry ─────────────────────────────────────
 
     /**
-     * Creates an inventory whose NMS container rejects shulker boxes at the slot level.
-     * This mirrors vanilla's own shulker box behavior.
+     * Opens a shulker box GUI whose NMS container rejects shulker boxes at the slot level.
+     * Returns the Bukkit Inventory wrapping the NMS container.
      */
-    private Inventory createShulkerInventory(String title, ItemStack sourceItem) {
+    private Inventory openShulkerGUI(Player player, String title, ItemStack sourceItem) {
+        ServerPlayer sp = ((CraftPlayer) player).getHandle();
+
         SimpleContainer nms = new SimpleContainer(27) {
             @Override
             public boolean canPlaceItem(int slot, net.minecraft.world.item.ItemStack stack) {
-                return !ShulkerBoxBlock.isShulkerBox(stack);
+                net.minecraft.world.item.Item item = stack.getItem();
+                if (item instanceof BlockItem bi) {
+                    return !(bi.getBlock() instanceof ShulkerBoxBlock);
+                }
+                return true;
             }
         };
-        CraftInventoryCustom inv = new CraftInventoryCustom(null, nms) {
-            @Override
-            public String getTitle() { return title; }
-        };
+
+        // Populate from source item
         if (sourceItem.hasItemMeta() && sourceItem.getItemMeta() instanceof BlockStateMeta bsm) {
             if (bsm.getBlockState() instanceof ShulkerBox box) {
-                inv.setContents(box.getInventory().getContents());
+                org.bukkit.inventory.ItemStack[] contents = box.getInventory().getContents();
+                for (int i = 0; i < 27 && i < contents.length; i++) {
+                    if (contents[i] != null && !contents[i].getType().isAir()) {
+                        nms.setItem(i, CraftItemStack.asNMSCopy(contents[i]));
+                    }
+                }
             }
         }
-        return inv;
+
+        sp.openMenu(new SimpleMenuProvider(
+            (syncId, inv, p) -> new ChestMenu(MenuType.GENERIC_9x3, syncId, inv, nms, 3),
+            Component.literal(title)
+        ));
+
+        return player.getOpenInventory().getTopInventory();
     }
 
     /**
@@ -471,25 +489,26 @@ public class ShulkerPlus extends JavaPlugin implements Listener, PluginMessageLi
         if (type == OpenableType.SHULKER) {
             String title = sourceItem.hasItemMeta() && sourceItem.getItemMeta().hasDisplayName()
                 ? sourceItem.getItemMeta().getDisplayName() : "Shulker Box";
-            virtualInv = createShulkerInventory(title, sourceItem);
+            virtualInv = openShulkerGUI(player, title, sourceItem);
+            if (playSounds) {
+                player.playSound(player.getLocation(),
+                    Sound.BLOCK_SHULKER_BOX_OPEN, 1f, 1f);
+            }
         }
 
         Session session = new Session(type, hand, virtualInv, sourceItem, hotbarSlot, itemId);
         sessions.put(player.getUniqueId(), session);
 
         switch (type) {
-            case SHULKER:
-                player.openInventory(virtualInv);
-                if (playSounds) {
-                    player.playSound(player.getLocation(),
-                        Sound.BLOCK_SHULKER_BOX_OPEN, 1f, 1f);
-                }
-                break;
             case WORKBENCH:
                 openNmsWorkbench(player);
                 break;
             case STONECUTTER:
                 openNmsStonecutter(player);
+                break;
+            case ENDER_CHEST:
+                player.openInventory(player.getEnderChest());
+                if (playSounds) player.playSound(player.getLocation(), Sound.BLOCK_ENDER_CHEST_OPEN, 1f, 1f);
                 break;
         }
     }
@@ -649,14 +668,9 @@ public class ShulkerPlus extends JavaPlugin implements Listener, PluginMessageLi
     private Session createNestedSession(Player player, OpenableType type, ItemStack item,
                                          int slot, Session previousSession) {
         UUID itemId = getOrCreateItemId(item);
-        Inventory virtualInv = null;
-        if (type == OpenableType.SHULKER) {
-            String title = item.hasItemMeta() && item.getItemMeta().hasDisplayName()
-                ? item.getItemMeta().getDisplayName() : "Shulker Box";
-            virtualInv = createShulkerInventory(title, item);
-        }
+        // Virtual inv is created later in openItemFromSession via openShulkerGUI
         Session newSession = new Session(type, previousSession.equipmentSlot,
-            virtualInv, item, slot, itemId);
+            null, item, slot, itemId);
         newSession.uiStack = previousSession.uiStack;
         return newSession;
     }
@@ -666,7 +680,9 @@ public class ShulkerPlus extends JavaPlugin implements Listener, PluginMessageLi
         sessions.put(player.getUniqueId(), session);
         switch (type) {
             case SHULKER:
-                player.openInventory(session.virtualInv);
+                String title = sourceItem.hasItemMeta() && sourceItem.getItemMeta().hasDisplayName()
+                    ? sourceItem.getItemMeta().getDisplayName() : "Shulker Box";
+                session.virtualInv = openShulkerGUI(player, title, sourceItem);
                 if (playSounds) {
                     player.playSound(player.getLocation(),
                         Sound.BLOCK_SHULKER_BOX_OPEN, 1f, 1f);
@@ -732,19 +748,17 @@ public class ShulkerPlus extends JavaPlugin implements Listener, PluginMessageLi
                 if (type == OpenableType.SHULKER) {
                     String title = finalItem.hasItemMeta() && finalItem.getItemMeta().hasDisplayName()
                         ? finalItem.getItemMeta().getDisplayName() : "Shulker Box";
-                    virtualInv = createShulkerInventory(title, finalItem);
+                    virtualInv = openShulkerGUI(player, title, finalItem);
+                    if (playSounds) {
+                        player.playSound(player.getLocation(),
+                            Sound.BLOCK_SHULKER_BOX_OPEN, 1f, 1f);
+                    }
                 }
                 Session session = new Session(type, hand, virtualInv, finalItem,
                     hotbarSlot, itemId);
                 session.uiStack.push(new UIContext(vanillaView));
                 sessions.put(player.getUniqueId(), session);
-                if (type == OpenableType.SHULKER) {
-                    player.openInventory(virtualInv);
-                    if (playSounds) {
-                        player.playSound(player.getLocation(),
-                            Sound.BLOCK_SHULKER_BOX_OPEN, 1f, 1f);
-                    }
-                } else if (type == OpenableType.WORKBENCH) {
+                if (type == OpenableType.WORKBENCH) {
                     openNmsWorkbench(player);
                 } else if (type == OpenableType.STONECUTTER) {
                     openNmsStonecutter(player);

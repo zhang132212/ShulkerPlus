@@ -14,7 +14,7 @@ import java.util.UUID;
 public class Session {
     final OpenableType type;
     final EquipmentSlot equipmentSlot;
-    final Inventory virtualInv;
+    Inventory virtualInv;
     final ItemStack sourceItem;
     final int hotbarSlot;
     final UUID itemId;
