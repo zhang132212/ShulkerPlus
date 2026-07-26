@@ -20,6 +20,7 @@ public class Session {
     final UUID itemId;
     final long openedAt = System.currentTimeMillis();
     Deque<UIContext> uiStack = new ArrayDeque<>();
+    boolean returnToPlayerInventory;
 
     Session(OpenableType type, EquipmentSlot equipmentSlot, Inventory virtualInv,
             ItemStack sourceItem, int hotbarSlot, UUID itemId) {

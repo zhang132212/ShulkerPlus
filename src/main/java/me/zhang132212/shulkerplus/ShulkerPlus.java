@@ -77,6 +77,7 @@ public class ShulkerPlus extends JavaPlugin implements Listener, PluginMessageLi
         getServer().getPluginManager().registerEvents(this, this);
 
         getServer().getMessenger().registerOutgoingPluginChannel(this, "quickshulker:open_shulker_packet");
+        getServer().getMessenger().registerOutgoingPluginChannel(this, "quickshulker:openinv");
         getServer().getMessenger().registerIncomingPluginChannel(this, "quickshulker:open_shulker_packet", this);
 
         cleanupTask = new CleanupRunnable().runTaskTimer(this, 20L, 20L);
@@ -115,8 +116,13 @@ public class ShulkerPlus extends JavaPlugin implements Listener, PluginMessageLi
                 return;
             }
             syncToSource(player, existing);
+            boolean returnToPlayerInventory = existing.returnToPlayerInventory;
             openItem(player, type, item, invIndex,
                 invIndex == 40 ? EquipmentSlot.OFF_HAND : EquipmentSlot.HAND);
+            Session opened = sessions.get(player.getUniqueId());
+            if (opened != null) {
+                opened.returnToPlayerInventory = returnToPlayerInventory;
+            }
             return;
         }
 
@@ -171,9 +177,16 @@ public class ShulkerPlus extends JavaPlugin implements Listener, PluginMessageLi
 
             Session session = new Session(type, hand, null, current,
                 sourceSlot, itemId);
-            session.uiStack.push(new UIContext(originView));
+            session.returnToPlayerInventory = true;
             openItemFromSession(player, type, session, current, sourceSlot);
         });
+    }
+
+    private void openPlayerInventoryScreen(Player player) {
+        if (!player.isOnline()) return;
+        byte[] payload = java.nio.ByteBuffer.allocate(Integer.BYTES)
+            .putInt(0).array();
+        player.sendPluginMessage(this, "quickshulker:openinv", payload);
     }
 
     @Override
@@ -847,6 +860,7 @@ public class ShulkerPlus extends JavaPlugin implements Listener, PluginMessageLi
         Session newSession = new Session(type, previousSession.equipmentSlot,
             null, item, slot, itemId);
         newSession.uiStack = previousSession.uiStack;
+        newSession.returnToPlayerInventory = previousSession.returnToPlayerInventory;
         return newSession;
     }
 
@@ -959,6 +973,7 @@ public class ShulkerPlus extends JavaPlugin implements Listener, PluginMessageLi
                 prev.topInventory, prev.sourceItem, prev.sourceSlot,
                 getOrCreateItemId(prev.sourceItem));
             restored.uiStack = session.uiStack;
+            restored.returnToPlayerInventory = session.returnToPlayerInventory;
             sessions.put(player.getUniqueId(), restored);
 
             Bukkit.getScheduler().runTask(this, () -> {
@@ -973,6 +988,10 @@ public class ShulkerPlus extends JavaPlugin implements Listener, PluginMessageLi
             if (session.type == OpenableType.SHULKER && playSounds) {
                 player.playSound(player.getLocation(),
                     Sound.BLOCK_SHULKER_BOX_CLOSE, 1f, 1f);
+            }
+            if (session.returnToPlayerInventory) {
+                Bukkit.getScheduler().runTask(this, () ->
+                    openPlayerInventoryScreen(player));
             }
         }
     }
