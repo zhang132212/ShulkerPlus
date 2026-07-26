@@ -14,6 +14,7 @@ public class UIContext {
     final ItemStack sourceItem;
     final int sourceSlot;
     final boolean isVanilla;
+    final String title;
 
     UIContext(OpenableType type, Inventory topInventory, ItemStack sourceItem, int sourceSlot) {
         this.type = type;
@@ -21,6 +22,7 @@ public class UIContext {
         this.sourceItem = sourceItem;
         this.sourceSlot = sourceSlot;
         this.isVanilla = false;
+        this.title = null;
     }
 
     UIContext(InventoryView vanillaView) {
@@ -29,5 +31,6 @@ public class UIContext {
         this.sourceItem = null;
         this.sourceSlot = -1;
         this.isVanilla = true;
+        this.title = vanillaView.getTitle();
     }
 }

@@ -441,7 +441,7 @@ public class ShulkerPlus extends JavaPlugin implements Listener, PluginMessageLi
                     return !p.isRemoved();
                 }
             },
-            Component.translatable("container.crafting")
+            Component.literal("工作台")
         ));
     }
 
@@ -455,8 +455,42 @@ public class ShulkerPlus extends JavaPlugin implements Listener, PluginMessageLi
                     return !p.isRemoved();
                 }
             },
-            Component.translatable("container.stonecutter")
+            Component.literal("切石机")
         ));
+    }
+
+    private void openEnderChest(Player player) {
+        InventoryView view = player.openInventory(player.getEnderChest());
+        view.setTitle("末影箱");
+    }
+
+    private String localizeDefaultGuiTitle(String title) {
+        if (title == null) return null;
+        return switch (title) {
+            case "Chest" -> "箱子";
+            case "Large Chest" -> "大箱子";
+            case "Shulker Box" -> "潜影盒";
+            case "Ender Chest" -> "末影箱";
+            case "Crafting", "Crafting Table" -> "工作台";
+            case "Stonecutter" -> "切石机";
+            case "Barrel" -> "木桶";
+            case "Furnace" -> "熔炉";
+            case "Blast Furnace" -> "高炉";
+            case "Smoker" -> "烟熏炉";
+            case "Brewing Stand" -> "酿造台";
+            case "Dispenser" -> "发射器";
+            case "Dropper" -> "投掷器";
+            case "Hopper" -> "漏斗";
+            case "Anvil" -> "铁砧";
+            case "Enchanting" -> "附魔台";
+            case "Beacon" -> "信标";
+            case "Loom" -> "织布机";
+            case "Cartography Table" -> "制图台";
+            case "Grindstone", "Repair & Disenchant" -> "砂轮";
+            case "Smithing Table" -> "锻造台";
+            case "Trading" -> "交易";
+            default -> title;
+        };
     }
 
     // ─── Bundle logic ───────────────────────────────────────────
@@ -619,7 +653,7 @@ public class ShulkerPlus extends JavaPlugin implements Listener, PluginMessageLi
         Inventory virtualInv = null;
         if (type == OpenableType.SHULKER) {
             String title = sourceItem.hasItemMeta() && sourceItem.getItemMeta().hasDisplayName()
-                ? sourceItem.getItemMeta().getDisplayName() : "Shulker Box";
+                ? sourceItem.getItemMeta().getDisplayName() : "潜影盒";
             virtualInv = openShulkerGUI(player, title, sourceItem);
             if (playSounds) {
                 player.playSound(player.getLocation(),
@@ -638,7 +672,7 @@ public class ShulkerPlus extends JavaPlugin implements Listener, PluginMessageLi
                 openNmsStonecutter(player);
                 break;
             case ENDER_CHEST:
-                player.openInventory(player.getEnderChest());
+                openEnderChest(player);
                 if (playSounds) player.playSound(player.getLocation(), Sound.BLOCK_ENDER_CHEST_OPEN, 1f, 1f);
                 break;
         }
@@ -822,7 +856,7 @@ public class ShulkerPlus extends JavaPlugin implements Listener, PluginMessageLi
         switch (type) {
             case SHULKER:
                 String title = sourceItem.hasItemMeta() && sourceItem.getItemMeta().hasDisplayName()
-                    ? sourceItem.getItemMeta().getDisplayName() : "Shulker Box";
+                    ? sourceItem.getItemMeta().getDisplayName() : "潜影盒";
                 session.virtualInv = openShulkerGUI(player, title, sourceItem);
                 if (playSounds) {
                     player.playSound(player.getLocation(),
@@ -836,7 +870,7 @@ public class ShulkerPlus extends JavaPlugin implements Listener, PluginMessageLi
                 openNmsStonecutter(player);
                 break;
             case ENDER_CHEST:
-                player.openInventory(player.getEnderChest());
+                openEnderChest(player);
                 if (playSounds) player.playSound(player.getLocation(), Sound.BLOCK_ENDER_CHEST_OPEN, 1f, 1f);
                 break;
         }
@@ -911,7 +945,11 @@ public class ShulkerPlus extends JavaPlugin implements Listener, PluginMessageLi
             if (prev.isVanilla) {
                 Bukkit.getScheduler().runTask(this, () -> {
                     try {
-                        player.openInventory(prev.topInventory);
+                        InventoryView restoredView = player.openInventory(prev.topInventory);
+                        String localizedTitle = localizeDefaultGuiTitle(prev.title);
+                        if (localizedTitle != null && !localizedTitle.equals(prev.title)) {
+                            restoredView.setTitle(localizedTitle);
+                        }
                     } catch (Exception ignored) {}
                 });
                 return;
