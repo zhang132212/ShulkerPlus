@@ -337,8 +337,9 @@ public class ShulkerPlus extends JavaPlugin implements Listener, PluginMessageLi
     }
 
     private UUID getOrCreateItemId(ItemStack item) {
-        if (item == null || !item.hasItemMeta()) return UUID.randomUUID();
+        if (item == null) return UUID.randomUUID();
         ItemMeta meta = item.getItemMeta();
+        if (meta == null) return UUID.randomUUID();
         PersistentDataContainer pdc = meta.getPersistentDataContainer();
         if (pdc.has(itemKey, PersistentDataType.STRING)) {
             try {
