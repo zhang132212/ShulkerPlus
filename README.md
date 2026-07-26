@@ -1,7 +1,8 @@
 # ShulkerPlus
 
-Item-opened shulker boxes use a dedicated NMS container whose slots intrinsically
-reject every shulker-box item. The no-nesting rule does not depend on Bukkit
+Item-opened shulker boxes use vanilla `ShulkerBoxMenu`. Its 27
+`ShulkerBoxSlot` instances call `Item.canFitInsideContainerItems()`, exactly like
+a placed vanilla shulker box. The no-nesting rule does not depend on Bukkit
 click or drag event cancellation and does not apply to workbench or ender-chest
 interfaces.
 

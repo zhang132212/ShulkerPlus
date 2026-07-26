@@ -2,11 +2,11 @@ package me.zhang132212.shulkerplus;
 
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.SimpleContainer;
 import net.minecraft.world.SimpleMenuProvider;
-import net.minecraft.world.inventory.ChestMenu;
 import net.minecraft.world.inventory.ContainerLevelAccess;
 import net.minecraft.world.inventory.CraftingMenu;
-import net.minecraft.world.inventory.MenuType;
+import net.minecraft.world.inventory.ShulkerBoxMenu;
 import net.minecraft.world.inventory.StonecutterMenu;
 import org.bukkit.*;
 import org.bukkit.block.ShulkerBox;
@@ -443,7 +443,7 @@ public class ShulkerPlus extends JavaPlugin implements Listener, PluginMessageLi
     private Inventory openShulkerGUI(Player player, String title, ItemStack sourceItem) {
         ServerPlayer sp = ((CraftPlayer) player).getHandle();
 
-        NonNestingShulkerContainer nms = new NonNestingShulkerContainer();
+        SimpleContainer nms = new SimpleContainer(27);
 
         // Populate from source item
         if (sourceItem.hasItemMeta() && sourceItem.getItemMeta() instanceof BlockStateMeta bsm) {
@@ -458,7 +458,7 @@ public class ShulkerPlus extends JavaPlugin implements Listener, PluginMessageLi
         }
 
         sp.openMenu(new SimpleMenuProvider(
-            (syncId, inv, p) -> new ChestMenu(MenuType.GENERIC_9x3, syncId, inv, nms, 3),
+            (syncId, inv, p) -> new ShulkerBoxMenu(syncId, inv, nms),
             Component.literal(title)
         ));
 
