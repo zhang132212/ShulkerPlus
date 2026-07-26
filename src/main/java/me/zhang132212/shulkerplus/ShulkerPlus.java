@@ -4,9 +4,11 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.SimpleContainer;
 import net.minecraft.world.SimpleMenuProvider;
+import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.inventory.ContainerLevelAccess;
 import net.minecraft.world.inventory.CraftingMenu;
 import net.minecraft.world.inventory.ShulkerBoxMenu;
+import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.inventory.StonecutterMenu;
 import org.bukkit.*;
 import org.bukkit.block.ShulkerBox;
@@ -92,10 +94,12 @@ public class ShulkerPlus extends JavaPlugin implements Listener, PluginMessageLi
     }
 
     private void handleOpenPacket(Player player, byte[] message) {
+        if (message.length != Integer.BYTES) return;
         int rawSlot = java.nio.ByteBuffer.wrap(message).getInt();
 
-        int invIndex = (rawSlot >= 36) ? rawSlot - 36 : rawSlot;
-        if (invIndex < 0 || invIndex >= 36) return;
+        InventoryView originView = player.getOpenInventory();
+        int invIndex = resolvePlayerInventorySlot(player, originView, rawSlot);
+        if (invIndex < 0) return;
 
         ItemStack item = player.getInventory().getItem(invIndex);
         if (!isOpenable(item)) return;
@@ -106,10 +110,70 @@ public class ShulkerPlus extends JavaPlugin implements Listener, PluginMessageLi
 
         Session existing = sessions.get(player.getUniqueId());
         if (existing != null) {
+            if (invIndex == getSourceSlot(existing)
+                    || existing.itemId.equals(getItemId(item))) {
+                return;
+            }
             syncToSource(player, existing);
+            openItem(player, type, item, invIndex,
+                invIndex == 40 ? EquipmentSlot.OFF_HAND : EquipmentSlot.HAND);
+            return;
         }
 
-        openItem(player, type, item, invIndex, EquipmentSlot.HAND);
+        openItemFromInventoryView(player, type, item, invIndex, originView);
+    }
+
+    /**
+     * Resolves the client ScreenHandler slot against the server's current NMS
+     * menu. Both the GUI region and the backing NMS container must identify a
+     * real player-inventory slot; top-container and equipment slots are denied.
+     */
+    private int resolvePlayerInventorySlot(Player player, InventoryView view,
+                                           int rawSlot) {
+        if (rawSlot < view.getTopInventory().getSize()) return -1;
+
+        ServerPlayer serverPlayer = ((CraftPlayer) player).getHandle();
+        AbstractContainerMenu menu = serverPlayer.containerMenu;
+        if (rawSlot < 0 || rawSlot >= menu.slots.size()) return -1;
+
+        Slot slot = menu.getSlot(rawSlot);
+        if (slot.container != serverPlayer.getInventory()) return -1;
+
+        int inventorySlot = slot.getContainerSlot();
+        if ((inventorySlot >= 0 && inventorySlot < 36) || inventorySlot == 40) {
+            return inventorySlot;
+        }
+        return -1;
+    }
+
+    private void openItemFromInventoryView(Player player, OpenableType type,
+                                           ItemStack sourceItem, int sourceSlot,
+                                           InventoryView originView) {
+        UUID itemId = getOrCreateItemId(sourceItem);
+        player.getInventory().setItem(sourceSlot, sourceItem);
+
+        boolean restoreOrigin = originView.getTopInventory().getType()
+            != InventoryType.CRAFTING;
+        player.closeInventory();
+
+        Bukkit.getScheduler().runTask(this, () -> {
+            if (!player.isOnline() || sessions.containsKey(player.getUniqueId())) return;
+
+            ItemStack current = player.getInventory().getItem(sourceSlot);
+            if (!itemId.equals(getItemId(current))) return;
+
+            EquipmentSlot hand = sourceSlot == 40
+                ? EquipmentSlot.OFF_HAND : EquipmentSlot.HAND;
+            if (!restoreOrigin) {
+                openItem(player, type, current, sourceSlot, hand);
+                return;
+            }
+
+            Session session = new Session(type, hand, null, current,
+                sourceSlot, itemId);
+            session.uiStack.push(new UIContext(originView));
+            openItemFromSession(player, type, session, current, sourceSlot);
+        });
     }
 
     @Override
@@ -780,68 +844,19 @@ public class ShulkerPlus extends JavaPlugin implements Listener, PluginMessageLi
 
     private void handleClickInVanillaContainer(InventoryClickEvent event, Player player) {
         if (event.getClickedInventory() != event.getView().getBottomInventory()) return;
+        if (event.getClick() != ClickType.RIGHT) return;
+        if (!event.getCursor().getType().isAir()) return;
 
-        ItemStack targetItem = null;
-
-        if (event.getClick() == ClickType.RIGHT) {
-            if (event.getCursor().getType().isAir() && isOpenable(event.getCurrentItem())) {
-                targetItem = event.getCurrentItem();
-            } else if (SHULKER_BOXES.contains(event.getCursor().getType())
-                    && (event.getAction() == InventoryAction.PICKUP_HALF
-                        || event.getAction() == InventoryAction.PICKUP_ALL)) {
-                targetItem = event.getCursor();
-            }
-        }
-
-        if (targetItem == null) return;
+        ItemStack targetItem = event.getCurrentItem();
+        if (!isOpenable(targetItem)) return;
         if (!checkPermissionAndCooldown(player)) return;
 
         OpenableType type = getOpenableType(targetItem);
         if (type == null) return;
 
         event.setCancelled(true);
-
-        Inventory top = event.getView().getTopInventory();
-        boolean isPlayerOwnInventory = (top.getType() == InventoryType.CRAFTING);
-
-        ItemStack finalItem = targetItem;
-
-        if (isPlayerOwnInventory) {
-            int slot = findSlotInInventory(player, finalItem);
-            EquipmentSlot hand = (slot == 40) ? EquipmentSlot.OFF_HAND : EquipmentSlot.HAND;
-            int hotbarSlot = (slot == 40) ? -1 : slot;
-            player.closeInventory();
-            Bukkit.getScheduler().runTask(this, () ->
-                openItem(player, type, finalItem, hotbarSlot, hand));
-        } else {
-            InventoryView vanillaView = event.getView();
-            int slot = findSlotInInventory(player, finalItem);
-            EquipmentSlot hand = (slot == 40) ? EquipmentSlot.OFF_HAND : EquipmentSlot.HAND;
-            int hotbarSlot = (slot == 40) ? -1 : slot;
-            player.closeInventory();
-            Bukkit.getScheduler().runTask(this, () -> {
-                UUID itemId = getOrCreateItemId(finalItem);
-                Inventory virtualInv = null;
-                if (type == OpenableType.SHULKER) {
-                    String title = finalItem.hasItemMeta() && finalItem.getItemMeta().hasDisplayName()
-                        ? finalItem.getItemMeta().getDisplayName() : "Shulker Box";
-                    virtualInv = openShulkerGUI(player, title, finalItem);
-                    if (playSounds) {
-                        player.playSound(player.getLocation(),
-                            Sound.BLOCK_SHULKER_BOX_OPEN, 1f, 1f);
-                    }
-                }
-                Session session = new Session(type, hand, virtualInv, finalItem,
-                    hotbarSlot, itemId);
-                session.uiStack.push(new UIContext(vanillaView));
-                sessions.put(player.getUniqueId(), session);
-                if (type == OpenableType.WORKBENCH) {
-                    openNmsWorkbench(player);
-                } else if (type == OpenableType.STONECUTTER) {
-                    openNmsStonecutter(player);
-                }
-            });
-        }
+        openItemFromInventoryView(player, type, targetItem, event.getSlot(),
+            event.getView());
     }
 
     @EventHandler

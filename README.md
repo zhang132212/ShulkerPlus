@@ -6,15 +6,15 @@ a placed vanilla shulker box. The no-nesting rule does not depend on Bukkit
 click or drag event cancellation and does not apply to workbench or ender-chest
 interfaces.
 
-Paper 插件，支持手持潜影盒/工作台/切石机右键打开，背包内嵌套切换，收纳袋功能。
+Paper 插件，支持手持潜影盒/工作台/切石机/末影箱右键打开，背包内嵌套切换，收纳袋功能。
 
 ## 功能
 
 | 功能 | 说明 |
 |------|------|
-| **潜行+右键打开** | 手持潜影盒/工作台/切石机 → 潜行+右键 → 直接打开对应 UI |
-| **背包右键打开** | 按 E → 右键背包里的潜影盒/工作台 → 打开（需装 Fabric mod） |
-| **嵌套打开** | 在任意 UI 里右键背包的可打开物品 → 自动切换，ESC 逐层退回 |
+| **潜行+右键打开** | 手持潜影盒/工作台/切石机/末影箱 → 潜行+右键 → 直接打开对应 UI |
+| **背包右键打开** | 在任意容器界面右键玩家背包里的潜影盒/工作台/切石机/末影箱 → 打开（需装 Fabric mod） |
+| **嵌套打开** | 在任意容器 UI 里右键下方玩家背包的可打开物品 → 自动切换，ESC 退回原界面；上方容器物品不会触发 |
 | **收纳袋** | 光标持潜影盒 → 右键物品塞入 / 右键空格取出 / 右键非潜影盒物品填充 |
 | **工作台合成** | 真实 3x3 合成（非配方书），结果格预览，Shift 批量 |
 | **切石机切割** | 真实切石机，结果预览，Shift 批量 |
@@ -24,7 +24,7 @@ Paper 插件，支持手持潜影盒/工作台/切石机右键打开，背包内
 
 ## 安装
 
-1. 把 `ShulkerPlus-3.5.0.jar` 放入 `plugins/` 目录
+1. 把 `ShulkerPlus-3.3.8.jar` 放入 `plugins/` 目录
 2. 重启服务器
 3. 编辑 `plugins/ShulkerPlus/config.yml` 按需调整配置
 
