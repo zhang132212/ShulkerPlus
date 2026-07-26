@@ -12,6 +12,7 @@ import org.bukkit.*;
 import org.bukkit.block.ShulkerBox;
 import org.bukkit.craftbukkit.entity.CraftPlayer;
 import org.bukkit.craftbukkit.inventory.CraftItemStack;
+import org.bukkit.entity.Item;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
@@ -233,6 +234,79 @@ public class ShulkerPlus extends JavaPlugin implements Listener, PluginMessageLi
             return inv.getItem(session.hotbarSlot);
         }
         return inv.getItemInOffHand();
+    }
+
+    /**
+     * Workbench and ender-chest menus may finish processing a late quick-move
+     * packet while they are closing. Wait one tick for vanilla to return or
+     * drop the item, then restore one source item only if its session UUID is
+     * no longer present anywhere reachable by the player.
+     */
+    private void scheduleSourceIntegrityCheck(Player player, Session session,
+                                              Inventory closedInventory) {
+        if (session.type != OpenableType.WORKBENCH
+                && session.type != OpenableType.ENDER_CHEST) {
+            return;
+        }
+
+        UUID playerId = player.getUniqueId();
+        Bukkit.getScheduler().runTaskLater(this, () -> {
+            Player onlinePlayer = Bukkit.getPlayer(playerId);
+            if (onlinePlayer == null || !onlinePlayer.isOnline()) return;
+            if (hasSessionItem(onlinePlayer, session.itemId, closedInventory)) return;
+
+            ItemStack restored = session.sourceItem.clone();
+            restored.setAmount(1);
+
+            PlayerInventory inventory = onlinePlayer.getInventory();
+            int sourceSlot = getSourceSlot(session);
+            ItemStack sourceSlotItem = sourceSlot >= 0 && sourceSlot < inventory.getSize()
+                ? inventory.getItem(sourceSlot) : null;
+
+            if (sourceSlot >= 0 && sourceSlot < inventory.getSize()
+                    && (sourceSlotItem == null || sourceSlotItem.getType().isAir())) {
+                inventory.setItem(sourceSlot, restored);
+            } else {
+                Map<Integer, ItemStack> leftovers = inventory.addItem(restored);
+                for (ItemStack leftover : leftovers.values()) {
+                    onlinePlayer.getWorld().dropItemNaturally(
+                        onlinePlayer.getLocation(), leftover);
+                }
+            }
+
+            getLogger().warning("Restored missing " + session.type
+                + " source item for " + onlinePlayer.getName()
+                + " (session " + session.itemId + ")");
+        }, 1L);
+    }
+
+    private boolean hasSessionItem(Player player, UUID itemId,
+                                   Inventory closedInventory) {
+        if (containsSessionItem(player.getInventory(), itemId)) return true;
+        if (isSessionItem(player.getItemOnCursor(), itemId)) return true;
+        if (containsSessionItem(player.getEnderChest(), itemId)) return true;
+        if (closedInventory != null
+                && containsSessionItem(closedInventory, itemId)) return true;
+
+        for (org.bukkit.entity.Entity entity : player.getNearbyEntities(4, 4, 4)) {
+            if (entity instanceof Item dropped
+                    && isSessionItem(dropped.getItemStack(), itemId)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private boolean containsSessionItem(Inventory inventory, UUID itemId) {
+        if (inventory == null) return false;
+        for (ItemStack item : inventory.getContents()) {
+            if (isSessionItem(item, itemId)) return true;
+        }
+        return false;
+    }
+
+    private boolean isSessionItem(ItemStack item, UUID itemId) {
+        return itemId != null && itemId.equals(getItemId(item));
     }
 
     private UUID getItemId(ItemStack item) {
@@ -807,6 +881,7 @@ public class ShulkerPlus extends JavaPlugin implements Listener, PluginMessageLi
         }
 
         syncToSource(player, session);
+        scheduleSourceIntegrityCheck(player, session, event.getInventory());
 
         // Keep session alive briefly to block in-flight itemscroller auto-move packets
         UUID playerId = player.getUniqueId();
