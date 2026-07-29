@@ -5,54 +5,45 @@ on:
     branches: [ "master" ]
   workflow_dispatch:
 
-permissions:
-  contents: write
-
 jobs:
   build:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
       - uses: actions/checkout@v4
 
-      - name: Setup Java 21
+      - name: Set up JDK 21
         uses: actions/setup-java@v4
         with:
-          java-version: 21
-          distribution: temurin
+          java-version: '21'
+          distribution: 'temurin'
 
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: "9.5.1"
 
       - name: Build with Gradle
-        run: ./gradlew build
+        run: gradle build
 
-      - name: Find JAR
-        id: find_jar
-        run: |
-          JAR_FILE=$(find build/libs -name "*.jar" ! -name "*-sources.jar" ! -name "*-javadoc.jar" | head -1)
-          echo "jar_path=$JAR_FILE" >> $GITHUB_OUTPUT
-          echo "jar_name=$(basename $JAR_FILE)" >> $GITHUB_OUTPUT
-
-      - name: Extract version
+      - name: Get version
         id: version
-        run: |
-          VERSION=$(grep "^version" build.gradle.kts | sed 's/.*"\(.*\)".*/\1/')
-          echo "tag=v$VERSION" >> $GITHUB_OUTPUT
+        run: echo "VERSION=$(gradle properties -q | grep '^version:' | awk '{print $2}')" >> $GITHUB_OUTPUT
 
-      - name: Delete old release
+      - name: Delete old releases
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh release list --limit 10 --json tagName --jq '.[].tagName' | while read tag; do
+          gh release list --json tagName --jq '.[].tagName' | while read tag; do
             gh release delete "$tag" --yes 2>/dev/null || true
             git push --delete origin "$tag" 2>/dev/null || true
           done
 
       - name: Create Release
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          gh release create "${{ steps.version.outputs.tag }}" \
-            "${{ steps.find_jar.outputs.jar_path }}" \
-            --title "ShulkerPlus ${{ steps.version.outputs.tag }}" \
-            --generate-notes
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ steps.version.outputs.VERSION }}
+          name: ShulkerPlus v${{ steps.version.outputs.VERSION }}
+          files: build/libs/*.jar
+          generate_release_notes: true
