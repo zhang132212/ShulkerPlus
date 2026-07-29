@@ -417,7 +417,7 @@ PluginMessageListener {
             if (sourceSlot >= 0 && sourceSlot < inventory.getSize() && (sourceSlotItem == null || sourceSlotItem.getType().isAir())) {
                 inventory.setItem(sourceSlot, restored);
             } else {
-                HashMap leftovers = inventory.addItem(new ItemStack[]{restored});
+                java.util.HashMap<Integer, ItemStack> leftovers = (java.util.HashMap<Integer, ItemStack>) inventory.addItem(new ItemStack[]{restored});
                 for (ItemStack leftover : leftovers.values()) {
                     onlinePlayer.getWorld().dropItemNaturally(onlinePlayer.getLocation(), leftover);
                 }
@@ -510,7 +510,7 @@ PluginMessageListener {
             }
         }
         UUID id = UUID.randomUUID();
-        pdc.set(this.itemKey, PersistentDataType.STRING, (Object)id.toString());
+        pdc.set(this.itemKey, PersistentDataType.STRING, id.toString());
         item.setItemMeta(meta);
         return id;
     }
@@ -531,7 +531,7 @@ PluginMessageListener {
     private void openNmsWorkbench(org.bukkit.entity.Player player) {
         ServerPlayer sp = ((CraftPlayer)player).getHandle();
         ContainerLevelAccess access = ContainerLevelAccess.create((Level)sp.level(), (BlockPos)sp.blockPosition());
-        sp.openMenu((MenuProvider)new SimpleMenuProvider((syncId, inv, p) -> new CraftingMenu(this, syncId, inv, access){
+        sp.openMenu((MenuProvider)new SimpleMenuProvider((syncId, inv, p) -> new CraftingMenu(syncId, inv, access){
 
             public boolean stillValid(Player p) {
                 return !p.isRemoved();
@@ -542,7 +542,7 @@ PluginMessageListener {
     private void openNmsStonecutter(org.bukkit.entity.Player player) {
         ServerPlayer sp = ((CraftPlayer)player).getHandle();
         ContainerLevelAccess access = ContainerLevelAccess.create((Level)sp.level(), (BlockPos)sp.blockPosition());
-        sp.openMenu((MenuProvider)new SimpleMenuProvider((syncId, inv, p) -> new StonecutterMenu(this, syncId, inv, access){
+        sp.openMenu((MenuProvider)new SimpleMenuProvider((syncId, inv, p) -> new StonecutterMenu(syncId, inv, access){
 
             public boolean stillValid(Player p) {
                 return !p.isRemoved();
@@ -621,7 +621,7 @@ PluginMessageListener {
         if (cursorIsShulker && (current == null || current.getType().isAir())) {
             event.setCancelled(true);
             int slot = event.getSlot();
-            PlayerInventory targetInv = clickedBottom ? player.getInventory() : event.getClickedInventory();
+            Inventory targetInv = clickedBottom ? player.getInventory() : event.getClickedInventory();
             this.bundleExtract(player, cursor, (Inventory)targetInv, slot);
             return true;
         }
