@@ -191,6 +191,12 @@ PluginMessageListener {
         if (type == null) {
             return;
         }
+        if (!this.enableNestedOpening && originView.getTopInventory().getType() != InventoryType.CRAFTING) {
+            return;
+        }
+        if (!this.checkPermissionAndCooldown(player)) {
+            return;
+        }
         Session existing = this.sessions.get(player.getUniqueId());
         if (existing != null) {
             if (invIndex == this.getSourceSlot(existing) || existing.itemId.equals(this.getItemId(item))) {
@@ -777,7 +783,22 @@ PluginMessageListener {
         event.setCancelled(true);
         EquipmentSlot hand = event.getHand();
         int hotbarSlot = hand == EquipmentSlot.HAND ? player.getInventory().getHeldItemSlot() : -1;
-        Bukkit.getScheduler().runTask((Plugin)this, () -> this.openItem(player, type, item, hotbarSlot, hand));
+        ItemStack expected = item.clone();
+        Bukkit.getScheduler().runTask((Plugin)this,
+                () -> this.openItemIfUnchanged(player, type, expected, hotbarSlot, hand));
+    }
+
+    void openItemIfUnchanged(org.bukkit.entity.Player player, OpenableType type,
+            ItemStack expected, int hotbarSlot, EquipmentSlot hand) {
+        if (!player.isOnline() || this.sessions.containsKey(player.getUniqueId())
+                || player.getInventory().getHeldItemSlot() != hotbarSlot) {
+            return;
+        }
+        ItemStack current = player.getInventory().getItem(hotbarSlot);
+        if (current == null || !current.equals(expected)) {
+            return;
+        }
+        this.openItem(player, type, current, hotbarSlot, hand);
     }
 
     @EventHandler(priority=EventPriority.LOWEST)
@@ -827,25 +848,26 @@ PluginMessageListener {
                 return;
             }
         }
-        if (this.enableNestedOpening && clicked.equals((Object)event.getView().getBottomInventory()) && this.isOpenable(clickedItem = event.getCurrentItem()) && event.getCursor().getType().isAir() && event.getClick() == ClickType.RIGHT) {
-            OpenableType newType = this.getOpenableType(clickedItem);
+        ItemStack nestedItem = event.getCurrentItem();
+        if (this.enableNestedOpening && clicked.equals((Object)event.getView().getBottomInventory()) && this.isOpenable(nestedItem) && event.getCursor().getType().isAir() && event.getClick() == ClickType.RIGHT) {
+            OpenableType newType = this.getOpenableType(nestedItem);
             if (newType == null) {
                 return;
             }
             event.setCancelled(true);
             this.syncToSource(player, session);
             session.uiStack.push(new UIContext(session.type, session.virtualInv, session.sourceItem, session.hotbarSlot));
-            int slot = this.findSlotInInventory(player, clickedItem);
+            int slot = this.findSlotInInventory(player, nestedItem);
             player.closeInventory();
             Bukkit.getScheduler().runTask((Plugin)this, () -> {
-                Session newSession = this.createNestedSession(player, newType, clickedItem, slot, session);
+                Session newSession = this.createNestedSession(player, newType, nestedItem, slot, session);
                 if (newSession == null) {
                     if (!session.uiStack.isEmpty()) {
                         session.uiStack.pop();
                     }
                     return;
                 }
-                this.openItemFromSession(player, newType, newSession, clickedItem, slot);
+                this.openItemFromSession(player, newType, newSession, nestedItem, slot);
             });
             return;
         }
@@ -871,7 +893,7 @@ PluginMessageListener {
                 event.setCancelled(true);
                 return;
             }
-            if (this.isOpenable(clickedItem) && event.getCursor().getType().isAir() && event.getClick() == ClickType.RIGHT) {
+            if (this.enableNestedOpening && this.isOpenable(clickedItem) && event.getCursor().getType().isAir() && event.getClick() == ClickType.RIGHT) {
                 OpenableType newType = this.getOpenableType(clickedItem);
                 if (newType == null) {
                     return;

@@ -1,0 +1,9 @@
+name: ReviewHarness
+version: '1.0'
+main: review.ReviewHarness
+api-version: '1.21.11'
+depend: [Vault, EnchantPlus, ShulkerPlus, MenuScrollGuard]
+softdepend: [IllagerInvasionLeaves]
+commands:
+  reviewtest:
+    description: Isolated review harness only

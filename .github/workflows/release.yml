@@ -28,19 +28,18 @@ jobs:
         run: gradle build
 
       - name: Get version
+        if: github.event_name == 'workflow_dispatch'
         id: version
         run: echo "VERSION=$(gradle properties -q | grep '^version:' | awk '{print $2}')" >> $GITHUB_OUTPUT
 
-      - name: Delete old releases
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          gh release list --json tagName --jq '.[].tagName' | while read tag; do
-            gh release delete "$tag" --yes 2>/dev/null || true
-            git push --delete origin "$tag" 2>/dev/null || true
-          done
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ShulkerPlus
+          path: build/libs/*.jar
 
       - name: Create Release
+        if: github.event_name == 'workflow_dispatch'
         uses: softprops/action-gh-release@v2
         with:
           tag_name: v${{ steps.version.outputs.VERSION }}

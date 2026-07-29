@@ -8,7 +8,14 @@ version = "3.3.14"
 
 dependencies {
     paperweight.paperDevBundle("1.21.11-R0.1-SNAPSHOT")
+    testImplementation("org.junit.jupiter:junit-jupiter:5.12.2")
+    testImplementation("org.mockito:mockito-core:5.18.0")
+    testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 }
+
+repositories { mavenCentral() }
+
+tasks.test { useJUnitPlatform() }
 
 java {
     toolchain.languageVersion.set(JavaLanguageVersion.of(21))

@@ -1,0 +1,7 @@
+node_modules/
+classes/
+target/
+*.jar
+*.log
+client-results.json
+client-error.txt
