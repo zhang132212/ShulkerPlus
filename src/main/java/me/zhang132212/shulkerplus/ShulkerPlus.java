@@ -827,25 +827,26 @@ PluginMessageListener {
                 return;
             }
         }
-        if (this.enableNestedOpening && clicked.equals((Object)event.getView().getBottomInventory()) && this.isOpenable(clickedItem = event.getCurrentItem()) && event.getCursor().getType().isAir() && event.getClick() == ClickType.RIGHT) {
-            OpenableType newType = this.getOpenableType(clickedItem);
+        ItemStack nestedItem = event.getCurrentItem();
+        if (this.enableNestedOpening && clicked.equals((Object)event.getView().getBottomInventory()) && this.isOpenable(nestedItem) && event.getCursor().getType().isAir() && event.getClick() == ClickType.RIGHT) {
+            OpenableType newType = this.getOpenableType(nestedItem);
             if (newType == null) {
                 return;
             }
             event.setCancelled(true);
             this.syncToSource(player, session);
             session.uiStack.push(new UIContext(session.type, session.virtualInv, session.sourceItem, session.hotbarSlot));
-            int slot = this.findSlotInInventory(player, clickedItem);
+            int slot = this.findSlotInInventory(player, nestedItem);
             player.closeInventory();
             Bukkit.getScheduler().runTask((Plugin)this, () -> {
-                Session newSession = this.createNestedSession(player, newType, clickedItem, slot, session);
+                Session newSession = this.createNestedSession(player, newType, nestedItem, slot, session);
                 if (newSession == null) {
                     if (!session.uiStack.isEmpty()) {
                         session.uiStack.pop();
                     }
                     return;
                 }
-                this.openItemFromSession(player, newType, newSession, clickedItem, slot);
+                this.openItemFromSession(player, newType, newSession, nestedItem, slot);
             });
             return;
         }
