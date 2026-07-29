@@ -1,28 +1,122 @@
+/*
+ * Decompiled with CFR 0.152.
+ * 
+ * Could not load the following classes:
+ *  net.minecraft.core.BlockPos
+ *  net.minecraft.network.chat.Component
+ *  net.minecraft.server.level.ServerPlayer
+ *  net.minecraft.world.Container
+ *  net.minecraft.world.MenuProvider
+ *  net.minecraft.world.SimpleContainer
+ *  net.minecraft.world.SimpleMenuProvider
+ *  net.minecraft.world.entity.player.Player
+ *  net.minecraft.world.inventory.AbstractContainerMenu
+ *  net.minecraft.world.inventory.ContainerLevelAccess
+ *  net.minecraft.world.inventory.CraftingMenu
+ *  net.minecraft.world.inventory.ShulkerBoxMenu
+ *  net.minecraft.world.inventory.Slot
+ *  net.minecraft.world.inventory.StonecutterMenu
+ *  net.minecraft.world.level.Level
+ *  org.bukkit.Bukkit
+ *  org.bukkit.ChatColor
+ *  org.bukkit.Material
+ *  org.bukkit.NamespacedKey
+ *  org.bukkit.Sound
+ *  org.bukkit.block.BlockState
+ *  org.bukkit.block.ShulkerBox
+ *  org.bukkit.craftbukkit.entity.CraftPlayer
+ *  org.bukkit.craftbukkit.inventory.CraftItemStack
+ *  org.bukkit.entity.Entity
+ *  org.bukkit.entity.HumanEntity
+ *  org.bukkit.entity.Item
+ *  org.bukkit.entity.Player
+ *  org.bukkit.event.EventHandler
+ *  org.bukkit.event.EventPriority
+ *  org.bukkit.event.Listener
+ *  org.bukkit.event.block.Action
+ *  org.bukkit.event.block.BlockPlaceEvent
+ *  org.bukkit.event.inventory.ClickType
+ *  org.bukkit.event.inventory.InventoryAction
+ *  org.bukkit.event.inventory.InventoryClickEvent
+ *  org.bukkit.event.inventory.InventoryCloseEvent
+ *  org.bukkit.event.inventory.InventoryDragEvent
+ *  org.bukkit.event.inventory.InventoryType
+ *  org.bukkit.event.player.PlayerDropItemEvent
+ *  org.bukkit.event.player.PlayerInteractEvent
+ *  org.bukkit.event.player.PlayerItemHeldEvent
+ *  org.bukkit.event.player.PlayerQuitEvent
+ *  org.bukkit.event.player.PlayerSwapHandItemsEvent
+ *  org.bukkit.inventory.EquipmentSlot
+ *  org.bukkit.inventory.Inventory
+ *  org.bukkit.inventory.InventoryView
+ *  org.bukkit.inventory.ItemStack
+ *  org.bukkit.inventory.PlayerInventory
+ *  org.bukkit.inventory.meta.BlockStateMeta
+ *  org.bukkit.inventory.meta.ItemMeta
+ *  org.bukkit.persistence.PersistentDataContainer
+ *  org.bukkit.persistence.PersistentDataType
+ *  org.bukkit.plugin.Plugin
+ *  org.bukkit.plugin.java.JavaPlugin
+ *  org.bukkit.plugin.messaging.PluginMessageListener
+ *  org.bukkit.scheduler.BukkitRunnable
+ *  org.bukkit.scheduler.BukkitTask
+ */
 package me.zhang132212.shulkerplus;
 
+import java.nio.ByteBuffer;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.Set;
+import java.util.UUID;
+import me.zhang132212.shulkerplus.OpenableType;
+import me.zhang132212.shulkerplus.Session;
+import me.zhang132212.shulkerplus.UIContext;
+import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.Container;
+import net.minecraft.world.MenuProvider;
 import net.minecraft.world.SimpleContainer;
 import net.minecraft.world.SimpleMenuProvider;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.inventory.ContainerLevelAccess;
 import net.minecraft.world.inventory.CraftingMenu;
 import net.minecraft.world.inventory.ShulkerBoxMenu;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.inventory.StonecutterMenu;
-import org.bukkit.*;
+import net.minecraft.world.level.Level;
+import org.bukkit.Bukkit;
+import org.bukkit.ChatColor;
+import org.bukkit.Material;
+import org.bukkit.NamespacedKey;
+import org.bukkit.Sound;
+import org.bukkit.block.BlockState;
 import org.bukkit.block.ShulkerBox;
 import org.bukkit.craftbukkit.entity.CraftPlayer;
 import org.bukkit.craftbukkit.inventory.CraftItemStack;
+import org.bukkit.entity.Entity;
+import org.bukkit.entity.HumanEntity;
 import org.bukkit.entity.Item;
-import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
 import org.bukkit.event.block.BlockPlaceEvent;
-import org.bukkit.event.inventory.*;
-import org.bukkit.event.player.*;
+import org.bukkit.event.inventory.ClickType;
+import org.bukkit.event.inventory.InventoryAction;
+import org.bukkit.event.inventory.InventoryClickEvent;
+import org.bukkit.event.inventory.InventoryCloseEvent;
+import org.bukkit.event.inventory.InventoryDragEvent;
+import org.bukkit.event.inventory.InventoryType;
+import org.bukkit.event.player.PlayerDropItemEvent;
+import org.bukkit.event.player.PlayerInteractEvent;
+import org.bukkit.event.player.PlayerItemHeldEvent;
+import org.bukkit.event.player.PlayerQuitEvent;
+import org.bukkit.event.player.PlayerSwapHandItemsEvent;
 import org.bukkit.inventory.EquipmentSlot;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.InventoryView;
@@ -32,272 +126,260 @@ import org.bukkit.inventory.meta.BlockStateMeta;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.persistence.PersistentDataContainer;
 import org.bukkit.persistence.PersistentDataType;
+import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.plugin.messaging.PluginMessageListener;
+import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.scheduler.BukkitTask;
 
-import java.util.*;
-
-public class ShulkerPlus extends JavaPlugin implements Listener, PluginMessageListener {
-
+public class ShulkerPlus
+extends JavaPlugin
+implements Listener,
+PluginMessageListener {
     private NamespacedKey itemKey;
-    private final Map<UUID, Session> sessions = new HashMap<>();
-    private final Map<UUID, Session> closingSessions = new HashMap<>();
-    private final Map<UUID, Long> cooldowns = new HashMap<>();
+    private final Map<UUID, Session> sessions = new HashMap<UUID, Session>();
+    private final Map<UUID, Session> closingSessions = new HashMap<UUID, Session>();
+    private final Map<UUID, Long> cooldowns = new HashMap<UUID, Long>();
     private BukkitTask cleanupTask;
-
-    private boolean requireSneak;
     private boolean playSounds;
     private boolean enableWorkbench;
     private boolean enableStonecutter;
     private boolean enableEnderChest;
     private boolean enableNestedOpening;
     private boolean enableBundleMode;
-    private boolean closeOnMove;
     private long cooldownMs;
-
     private static final Set<Material> SHULKER_BOXES;
-    static {
-        Set<Material> set = new HashSet<>();
-        for (Material m : Material.values()) {
-            String name = m.name();
-            if (name.endsWith("SHULKER_BOX")) {
-                set.add(m);
+
+    public void onEnable() {
+        this.saveDefaultConfig();
+        this.loadConfig();
+        this.itemKey = new NamespacedKey((Plugin)this, "shulkerplus_uid");
+        this.getServer().getPluginManager().registerEvents((Listener)this, (Plugin)this);
+        this.getServer().getMessenger().registerOutgoingPluginChannel((Plugin)this, "quickshulker:open_shulker_packet");
+        this.getServer().getMessenger().registerOutgoingPluginChannel((Plugin)this, "quickshulker:openinv");
+        this.getServer().getMessenger().registerIncomingPluginChannel((Plugin)this, "quickshulker:open_shulker_packet", (PluginMessageListener)this);
+        this.cleanupTask = new CleanupRunnable().runTaskTimer((Plugin)this, 20L, 20L);
+        this.getLogger().info("ShulkerPlus enabled!");
+    }
+
+    public void onPluginMessageReceived(String channel, org.bukkit.entity.Player player, byte[] message) {
+        switch (channel) {
+            case "quickshulker:open_shulker_packet": {
+                this.handleOpenPacket(player, message);
             }
         }
-        SHULKER_BOXES = Collections.unmodifiableSet(set);
     }
 
-    @Override
-    public void onEnable() {
-        saveDefaultConfig();
-        loadConfig();
-
-        itemKey = new NamespacedKey(this, "shulkerplus_uid");
-        getServer().getPluginManager().registerEvents(this, this);
-
-        getServer().getMessenger().registerOutgoingPluginChannel(this, "quickshulker:open_shulker_packet");
-        getServer().getMessenger().registerOutgoingPluginChannel(this, "quickshulker:openinv");
-        getServer().getMessenger().registerIncomingPluginChannel(this, "quickshulker:open_shulker_packet", this);
-
-        cleanupTask = new CleanupRunnable().runTaskTimer(this, 20L, 20L);
-
-        getLogger().info("ShulkerPlus enabled!");
-    }
-
-    @Override
-    public void onPluginMessageReceived(String channel, Player player, byte[] message) {
-        switch (channel) {
-            case "quickshulker:open_shulker_packet":
-                handleOpenPacket(player, message);
-                break;
+    private void handleOpenPacket(org.bukkit.entity.Player player, byte[] message) {
+        if (message.length != 4) {
+            return;
         }
-    }
-
-    private void handleOpenPacket(Player player, byte[] message) {
-        if (message.length != Integer.BYTES) return;
-        int rawSlot = java.nio.ByteBuffer.wrap(message).getInt();
-
+        int rawSlot = ByteBuffer.wrap(message).getInt();
         InventoryView originView = player.getOpenInventory();
-        int invIndex = resolvePlayerInventorySlot(player, originView, rawSlot);
-        if (invIndex < 0) return;
-
+        int invIndex = this.resolvePlayerInventorySlot(player, originView, rawSlot);
+        if (invIndex < 0) {
+            return;
+        }
         ItemStack item = player.getInventory().getItem(invIndex);
-        if (!isOpenable(item)) return;
-        if (item.getAmount() != 1) return;
-
-        OpenableType type = getOpenableType(item);
-        if (type == null) return;
-
-        Session existing = sessions.get(player.getUniqueId());
+        if (!this.isOpenable(item)) {
+            return;
+        }
+        if (item.getAmount() != 1) {
+            return;
+        }
+        OpenableType type = this.getOpenableType(item);
+        if (type == null) {
+            return;
+        }
+        Session existing = this.sessions.get(player.getUniqueId());
         if (existing != null) {
-            if (invIndex == getSourceSlot(existing)
-                    || existing.itemId.equals(getItemId(item))) {
+            if (invIndex == this.getSourceSlot(existing) || existing.itemId.equals(this.getItemId(item))) {
                 return;
             }
-            syncToSource(player, existing);
+            this.syncToSource(player, existing);
             boolean returnToPlayerInventory = existing.returnToPlayerInventory;
-            openItem(player, type, item, invIndex,
-                invIndex == 40 ? EquipmentSlot.OFF_HAND : EquipmentSlot.HAND);
-            Session opened = sessions.get(player.getUniqueId());
+            this.openItem(player, type, item, invIndex, invIndex == 40 ? EquipmentSlot.OFF_HAND : EquipmentSlot.HAND);
+            Session opened = this.sessions.get(player.getUniqueId());
             if (opened != null) {
                 opened.returnToPlayerInventory = returnToPlayerInventory;
             }
             return;
         }
-
-        openItemFromInventoryView(player, type, item, invIndex, originView);
+        this.openItemFromInventoryView(player, type, item, invIndex, originView);
     }
 
-    /**
-     * Resolves the client ScreenHandler slot against the server's current NMS
-     * menu. Both the GUI region and the backing NMS container must identify a
-     * real player-inventory slot; top-container and equipment slots are denied.
-     */
-    private int resolvePlayerInventorySlot(Player player, InventoryView view,
-                                           int rawSlot) {
-        if (rawSlot < view.getTopInventory().getSize()) return -1;
-
-        ServerPlayer serverPlayer = ((CraftPlayer) player).getHandle();
+    private int resolvePlayerInventorySlot(org.bukkit.entity.Player player, InventoryView view, int rawSlot) {
+        if (rawSlot < view.getTopInventory().getSize()) {
+            return -1;
+        }
+        ServerPlayer serverPlayer = ((CraftPlayer)player).getHandle();
         AbstractContainerMenu menu = serverPlayer.containerMenu;
-        if (rawSlot < 0 || rawSlot >= menu.slots.size()) return -1;
-
+        if (rawSlot < 0 || rawSlot >= menu.slots.size()) {
+            return -1;
+        }
         Slot slot = menu.getSlot(rawSlot);
-        if (slot.container != serverPlayer.getInventory()) return -1;
-
+        if (slot.container != serverPlayer.getInventory()) {
+            return -1;
+        }
         int inventorySlot = slot.getContainerSlot();
-        if ((inventorySlot >= 0 && inventorySlot < 36) || inventorySlot == 40) {
+        if (inventorySlot >= 0 && inventorySlot < 36 || inventorySlot == 40) {
             return inventorySlot;
         }
         return -1;
     }
 
-    private void openItemFromInventoryView(Player player, OpenableType type,
-                                           ItemStack sourceItem, int sourceSlot,
-                                           InventoryView originView) {
-        UUID itemId = getOrCreateItemId(sourceItem);
+    private void openItemFromInventoryView(org.bukkit.entity.Player player, OpenableType type, ItemStack sourceItem, int sourceSlot, InventoryView originView) {
+        UUID itemId = this.getOrCreateItemId(sourceItem);
         player.getInventory().setItem(sourceSlot, sourceItem);
-
-        boolean restoreOrigin = originView.getTopInventory().getType()
-            != InventoryType.CRAFTING;
+        boolean restoreOrigin = originView.getTopInventory().getType() != InventoryType.CRAFTING;
         player.closeInventory();
-
-        Bukkit.getScheduler().runTask(this, () -> {
-            if (!player.isOnline() || sessions.containsKey(player.getUniqueId())) return;
-
-            ItemStack current = player.getInventory().getItem(sourceSlot);
-            if (!itemId.equals(getItemId(current))) return;
-
-            EquipmentSlot hand = sourceSlot == 40
-                ? EquipmentSlot.OFF_HAND : EquipmentSlot.HAND;
-            if (!restoreOrigin) {
-                openItem(player, type, current, sourceSlot, hand);
+        Bukkit.getScheduler().runTask((Plugin)this, () -> {
+            EquipmentSlot hand;
+            if (!player.isOnline() || this.sessions.containsKey(player.getUniqueId())) {
                 return;
             }
-
-            Session session = new Session(type, hand, null, current,
-                sourceSlot, itemId);
+            ItemStack current = player.getInventory().getItem(sourceSlot);
+            if (!itemId.equals(this.getItemId(current))) {
+                return;
+            }
+            EquipmentSlot equipmentSlot = hand = sourceSlot == 40 ? EquipmentSlot.OFF_HAND : EquipmentSlot.HAND;
+            if (!restoreOrigin) {
+                this.openItem(player, type, current, sourceSlot, hand);
+                return;
+            }
+            Session session = new Session(type, hand, null, current, sourceSlot, itemId);
             session.returnToPlayerInventory = true;
-            openItemFromSession(player, type, session, current, sourceSlot);
+            this.openItemFromSession(player, type, session, current, sourceSlot);
         });
     }
 
-    private void openPlayerInventoryScreen(Player player) {
-        if (!player.isOnline()) return;
-        byte[] payload = java.nio.ByteBuffer.allocate(Integer.BYTES)
-            .putInt(0).array();
-        player.sendPluginMessage(this, "quickshulker:openinv", payload);
+    private void openPlayerInventoryScreen(org.bukkit.entity.Player player) {
+        if (!player.isOnline()) {
+            return;
+        }
+        byte[] payload = ByteBuffer.allocate(4).putInt(0).array();
+        player.sendPluginMessage((Plugin)this, "quickshulker:openinv", payload);
     }
 
-    @Override
     public void onDisable() {
-        if (cleanupTask != null) cleanupTask.cancel();
-        for (UUID pid : new HashSet<>(sessions.keySet())) {
-            Session s = sessions.get(pid);
-            Player p = Bukkit.getPlayer(pid);
-            if (p != null && s != null) {
-                syncToSource(p, s);
-                p.closeInventory();
-            }
+        if (this.cleanupTask != null) {
+            this.cleanupTask.cancel();
         }
-        sessions.clear();
-        cooldowns.clear();
+        for (UUID pid : new HashSet<UUID>(this.sessions.keySet())) {
+            Session s = this.sessions.get(pid);
+            org.bukkit.entity.Player p = Bukkit.getPlayer((UUID)pid);
+            if (p == null || s == null) continue;
+            this.syncToSource(p, s);
+            p.closeInventory();
+        }
+        this.sessions.clear();
+        this.cooldowns.clear();
     }
 
     private void loadConfig() {
-        requireSneak = getConfig().getBoolean("require-sneak", true);
-        playSounds = getConfig().getBoolean("play-sounds", true);
-        closeOnMove = getConfig().getBoolean("close-on-move", true);
-        cooldownMs = getConfig().getLong("cooldown-ms", 500L);
-        enableWorkbench = getConfig().getBoolean("enable-workbench", true);
-        enableStonecutter = getConfig().getBoolean("enable-stonecutter", true);
-        enableEnderChest = getConfig().getBoolean("enable-ender-chest", true);
-        enableNestedOpening = getConfig().getBoolean("enable-nested-opening", true);
-        enableBundleMode = getConfig().getBoolean("enable-bundle-mode", false);
+        this.playSounds = this.getConfig().getBoolean("play-sounds", true);
+        this.cooldownMs = this.getConfig().getLong("cooldown-ms", 500L);
+        this.enableWorkbench = this.getConfig().getBoolean("enable-workbench", true);
+        this.enableStonecutter = this.getConfig().getBoolean("enable-stonecutter", true);
+        this.enableEnderChest = this.getConfig().getBoolean("enable-ender-chest", true);
+        this.enableNestedOpening = this.getConfig().getBoolean("enable-nested-opening", true);
+        this.enableBundleMode = this.getConfig().getBoolean("enable-bundle-mode", false);
     }
 
-    // ─── Helpers ───────────────────────────────────────────────
-
     private boolean isOpenable(ItemStack item) {
-        if (item == null || item.getType().isAir()) return false;
+        if (item == null || item.getType().isAir()) {
+            return false;
+        }
         Material type = item.getType();
-        if (SHULKER_BOXES.contains(type)) return true;
-        if (enableWorkbench && type == Material.CRAFTING_TABLE) return true;
-        if (enableStonecutter && type == Material.STONECUTTER) return true;
-        if (enableEnderChest && type == Material.ENDER_CHEST) return true;
-        return false;
+        if (SHULKER_BOXES.contains(type)) {
+            return true;
+        }
+        if (this.enableWorkbench && type == Material.CRAFTING_TABLE) {
+            return true;
+        }
+        if (this.enableStonecutter && type == Material.STONECUTTER) {
+            return true;
+        }
+        return this.enableEnderChest && type == Material.ENDER_CHEST;
     }
 
     private OpenableType getOpenableType(ItemStack item) {
-        if (item == null || item.getType().isAir()) return null;
+        if (item == null || item.getType().isAir()) {
+            return null;
+        }
         Material type = item.getType();
-        if (SHULKER_BOXES.contains(type)) return OpenableType.SHULKER;
-        if (type == Material.CRAFTING_TABLE) return OpenableType.WORKBENCH;
-        if (type == Material.STONECUTTER) return OpenableType.STONECUTTER;
-        if (type == Material.ENDER_CHEST) return OpenableType.ENDER_CHEST;
+        if (SHULKER_BOXES.contains(type)) {
+            return OpenableType.SHULKER;
+        }
+        if (type == Material.CRAFTING_TABLE) {
+            return OpenableType.WORKBENCH;
+        }
+        if (type == Material.STONECUTTER) {
+            return OpenableType.STONECUTTER;
+        }
+        if (type == Material.ENDER_CHEST) {
+            return OpenableType.ENDER_CHEST;
+        }
         return null;
     }
 
     private void syncShulkerItems(ItemStack item, Inventory virtualInv) {
-        if (item == null || virtualInv == null) return;
+        BlockStateMeta bsm;
+        BlockState blockState;
+        if (item == null || virtualInv == null) {
+            return;
+        }
         ItemMeta meta = item.getItemMeta();
-        if (meta instanceof BlockStateMeta bsm) {
-            if (bsm.getBlockState() instanceof ShulkerBox box) {
-                box.getInventory().setContents(virtualInv.getContents());
-                bsm.setBlockState(box);
-                item.setItemMeta(bsm);
-            }
+        if (meta instanceof BlockStateMeta && (blockState = (bsm = (BlockStateMeta)meta).getBlockState()) instanceof ShulkerBox) {
+            ShulkerBox box = (ShulkerBox)blockState;
+            box.getInventory().setContents(virtualInv.getContents());
+            bsm.setBlockState((BlockState)box);
+            item.setItemMeta((ItemMeta)bsm);
         }
     }
 
-    private void syncToSource(Player player, Session session) {
-        if (session.type != OpenableType.SHULKER || session.virtualInv == null) return;
-        ItemStack current = findSourceItem(player, session);
-        // Safety net: if source item was moved, recover it by UUID
-        if (current == null) current = recoverSourceItem(player, session);
-        if (current == null) return;
-        syncShulkerItems(current, session.virtualInv);
+    private void syncToSource(org.bukkit.entity.Player player, Session session) {
+        if (session.type != OpenableType.SHULKER || session.virtualInv == null) {
+            return;
+        }
+        ItemStack current = this.findSourceItem(player, session);
+        if (current == null) {
+            current = this.recoverSourceItem(player, session);
+        }
+        if (current == null) {
+            return;
+        }
+        this.syncShulkerItems(current, session.virtualInv);
     }
 
-    private ItemStack recoverSourceItem(Player player, Session session) {
+    private ItemStack recoverSourceItem(org.bukkit.entity.Player player, Session session) {
+        ItemStack offhand;
+        ItemStack item;
+        int i;
         UUID targetId = session.itemId;
-        int sourceSlot = getSourceSlot(session);
-
-        // 1) Check if the source item ended up inside the virtual GUI
+        int sourceSlot = this.getSourceSlot(session);
         Inventory vInv = session.virtualInv;
-        for (int i = 0; i < vInv.getSize(); i++) {
-            ItemStack item = vInv.getItem(i);
-            if (item != null && targetId.equals(getItemId(item))) {
-                ItemStack recovered = item.clone();
-                vInv.setItem(i, null);
-                player.getInventory().setItem(sourceSlot, recovered);
-                return recovered;
-            }
+        for (i = 0; i < vInv.getSize(); ++i) {
+            item = vInv.getItem(i);
+            if (item == null || !targetId.equals(this.getItemId(item))) continue;
+            ItemStack recovered = item.clone();
+            vInv.setItem(i, null);
+            player.getInventory().setItem(sourceSlot, recovered);
+            return recovered;
         }
-
-        // 2) Check player inventory (may have been moved to another slot)
-        for (int i = 0; i < 36; i++) {
-            if (i == sourceSlot) continue;
-            ItemStack item = player.getInventory().getItem(i);
-            if (item != null && targetId.equals(getItemId(item))) {
-                ItemStack moved = item.clone();
-                player.getInventory().setItem(i, null);
-                player.getInventory().setItem(sourceSlot, moved);
-                return moved;
-            }
+        for (i = 0; i < 36; ++i) {
+            if (i == sourceSlot || (item = player.getInventory().getItem(i)) == null || !targetId.equals(this.getItemId(item))) continue;
+            ItemStack moved = item.clone();
+            player.getInventory().setItem(i, null);
+            player.getInventory().setItem(sourceSlot, moved);
+            return moved;
         }
-
-        // 3) Check offhand
-        if (sourceSlot != 40) {
-            ItemStack offhand = player.getInventory().getItemInOffHand();
-            if (offhand != null && targetId.equals(getItemId(offhand))) {
-                ItemStack moved = offhand.clone();
-                player.getInventory().setItemInOffHand(null);
-                player.getInventory().setItem(sourceSlot, moved);
-                return moved;
-            }
+        if (sourceSlot != 40 && (offhand = player.getInventory().getItemInOffHand()) != null && targetId.equals(this.getItemId(offhand))) {
+            ItemStack moved = offhand.clone();
+            player.getInventory().setItemInOffHand(null);
+            player.getInventory().setItem(sourceSlot, moved);
+            return moved;
         }
-
         return null;
     }
 
@@ -305,7 +387,7 @@ public class ShulkerPlus extends JavaPlugin implements Listener, PluginMessageLi
         return session.equipmentSlot == EquipmentSlot.HAND ? session.hotbarSlot : 40;
     }
 
-    private ItemStack findSourceItem(Player player, Session session) {
+    private ItemStack findSourceItem(org.bukkit.entity.Player player, Session session) {
         PlayerInventory inv = player.getInventory();
         if (session.equipmentSlot == EquipmentSlot.HAND) {
             return inv.getItem(session.hotbarSlot);
@@ -313,784 +395,753 @@ public class ShulkerPlus extends JavaPlugin implements Listener, PluginMessageLi
         return inv.getItemInOffHand();
     }
 
-    /**
-     * Workbench and ender-chest menus may finish processing a late quick-move
-     * packet while they are closing. Wait one tick for vanilla to return or
-     * drop the item, then restore one source item only if its session UUID is
-     * no longer present anywhere reachable by the player.
-     */
-    private void scheduleSourceIntegrityCheck(Player player, Session session,
-                                              Inventory closedInventory) {
-        if (session.type != OpenableType.WORKBENCH
-                && session.type != OpenableType.ENDER_CHEST) {
+    private void scheduleSourceIntegrityCheck(org.bukkit.entity.Player player, Session session, Inventory closedInventory) {
+        if (session.type != OpenableType.WORKBENCH && session.type != OpenableType.ENDER_CHEST) {
             return;
         }
-
         UUID playerId = player.getUniqueId();
-        Bukkit.getScheduler().runTaskLater(this, () -> {
-            Player onlinePlayer = Bukkit.getPlayer(playerId);
-            if (onlinePlayer == null || !onlinePlayer.isOnline()) return;
-            if (hasSessionItem(onlinePlayer, session.itemId, closedInventory)) return;
-
+        Bukkit.getScheduler().runTaskLater((Plugin)this, () -> {
+            ItemStack sourceSlotItem;
+            org.bukkit.entity.Player onlinePlayer = Bukkit.getPlayer((UUID)playerId);
+            if (onlinePlayer == null || !onlinePlayer.isOnline()) {
+                return;
+            }
+            if (this.hasSessionItem(onlinePlayer, session.itemId, closedInventory)) {
+                return;
+            }
             ItemStack restored = session.sourceItem.clone();
             restored.setAmount(1);
-
             PlayerInventory inventory = onlinePlayer.getInventory();
-            int sourceSlot = getSourceSlot(session);
-            ItemStack sourceSlotItem = sourceSlot >= 0 && sourceSlot < inventory.getSize()
-                ? inventory.getItem(sourceSlot) : null;
-
-            if (sourceSlot >= 0 && sourceSlot < inventory.getSize()
-                    && (sourceSlotItem == null || sourceSlotItem.getType().isAir())) {
+            int sourceSlot = this.getSourceSlot(session);
+            ItemStack itemStack = sourceSlotItem = sourceSlot >= 0 && sourceSlot < inventory.getSize() ? inventory.getItem(sourceSlot) : null;
+            if (sourceSlot >= 0 && sourceSlot < inventory.getSize() && (sourceSlotItem == null || sourceSlotItem.getType().isAir())) {
                 inventory.setItem(sourceSlot, restored);
             } else {
-                Map<Integer, ItemStack> leftovers = inventory.addItem(restored);
+                HashMap leftovers = inventory.addItem(new ItemStack[]{restored});
                 for (ItemStack leftover : leftovers.values()) {
-                    onlinePlayer.getWorld().dropItemNaturally(
-                        onlinePlayer.getLocation(), leftover);
+                    onlinePlayer.getWorld().dropItemNaturally(onlinePlayer.getLocation(), leftover);
                 }
             }
-
-            getLogger().warning("Restored missing " + session.type
-                + " source item for " + onlinePlayer.getName()
-                + " (session " + session.itemId + ")");
+            this.getLogger().warning("Restored missing " + String.valueOf((Object)session.type) + " source item for " + onlinePlayer.getName() + " (session " + String.valueOf(session.itemId) + ")");
         }, 1L);
     }
 
-    private boolean hasSessionItem(Player player, UUID itemId,
-                                   Inventory closedInventory) {
-        if (containsSessionItem(player.getInventory(), itemId)) return true;
-        if (isSessionItem(player.getItemOnCursor(), itemId)) return true;
-        if (containsSessionItem(player.getEnderChest(), itemId)) return true;
-        if (closedInventory != null
-                && containsSessionItem(closedInventory, itemId)) return true;
-
-        for (org.bukkit.entity.Entity entity : player.getNearbyEntities(4, 4, 4)) {
-            if (entity instanceof Item dropped
-                    && isSessionItem(dropped.getItemStack(), itemId)) {
-                return true;
-            }
+    private boolean hasSessionItem(org.bukkit.entity.Player player, UUID itemId, Inventory closedInventory) {
+        if (this.containsSessionItem((Inventory)player.getInventory(), itemId)) {
+            return true;
+        }
+        if (this.isSessionItem(player.getItemOnCursor(), itemId)) {
+            return true;
+        }
+        if (this.containsSessionItem(player.getEnderChest(), itemId)) {
+            return true;
+        }
+        if (closedInventory != null && this.containsSessionItem(closedInventory, itemId)) {
+            return true;
+        }
+        for (Entity entity : player.getNearbyEntities(4.0, 4.0, 4.0)) {
+            Item dropped;
+            if (!(entity instanceof Item) || !this.isSessionItem((dropped = (Item)entity).getItemStack(), itemId)) continue;
+            return true;
         }
         return false;
     }
 
     private boolean containsSessionItem(Inventory inventory, UUID itemId) {
-        if (inventory == null) return false;
+        if (inventory == null) {
+            return false;
+        }
         for (ItemStack item : inventory.getContents()) {
-            if (isSessionItem(item, itemId)) return true;
+            if (!this.isSessionItem(item, itemId)) continue;
+            return true;
         }
         return false;
     }
 
     private boolean isSessionItem(ItemStack item, UUID itemId) {
-        return itemId != null && itemId.equals(getItemId(item));
+        return itemId != null && itemId.equals(this.getItemId(item));
     }
 
     private UUID getItemId(ItemStack item) {
-        if (item == null || !item.hasItemMeta()) return null;
+        if (item == null || !item.hasItemMeta()) {
+            return null;
+        }
         PersistentDataContainer pdc = item.getItemMeta().getPersistentDataContainer();
-        if (pdc.has(itemKey, PersistentDataType.STRING)) {
+        if (pdc.has(this.itemKey, PersistentDataType.STRING)) {
             try {
-                return UUID.fromString(pdc.get(itemKey, PersistentDataType.STRING));
-            } catch (IllegalArgumentException ignored) {}
+                return UUID.fromString((String)pdc.get(this.itemKey, PersistentDataType.STRING));
+            }
+            catch (IllegalArgumentException illegalArgumentException) {
+                // empty catch block
+            }
         }
         return null;
     }
 
-    private int findSlotInInventory(Player player, ItemStack target) {
-        UUID targetId = getItemId(target);
+    private int findSlotInInventory(org.bukkit.entity.Player player, ItemStack target) {
+        UUID targetId = this.getItemId(target);
         ItemStack[] contents = player.getInventory().getContents();
-        for (int i = 0; i < contents.length; i++) {
-            if (contents[i] != null) {
-                if (targetId != null && targetId.equals(getItemId(contents[i]))) {
-                    return i;
-                }
-                if (targetId == null && contents[i].equals(target)) {
-                    return i;
-                }
+        for (int i = 0; i < contents.length; ++i) {
+            if (contents[i] == null) continue;
+            if (targetId != null && targetId.equals(this.getItemId(contents[i]))) {
+                return i;
             }
+            if (targetId != null || !contents[i].equals((Object)target)) continue;
+            return i;
         }
         return -1;
     }
 
     private UUID getOrCreateItemId(ItemStack item) {
-        if (item == null) return UUID.randomUUID();
+        if (item == null) {
+            return UUID.randomUUID();
+        }
         ItemMeta meta = item.getItemMeta();
-        if (meta == null) return UUID.randomUUID();
+        if (meta == null) {
+            return UUID.randomUUID();
+        }
         PersistentDataContainer pdc = meta.getPersistentDataContainer();
-        if (pdc.has(itemKey, PersistentDataType.STRING)) {
+        if (pdc.has(this.itemKey, PersistentDataType.STRING)) {
             try {
-                return UUID.fromString(pdc.get(itemKey, PersistentDataType.STRING));
-            } catch (IllegalArgumentException ignored) {}
+                return UUID.fromString((String)pdc.get(this.itemKey, PersistentDataType.STRING));
+            }
+            catch (IllegalArgumentException illegalArgumentException) {
+                // empty catch block
+            }
         }
         UUID id = UUID.randomUUID();
-        pdc.set(itemKey, PersistentDataType.STRING, id.toString());
+        pdc.set(this.itemKey, PersistentDataType.STRING, (Object)id.toString());
         item.setItemMeta(meta);
         return id;
     }
 
-    private boolean checkPermissionAndCooldown(Player player) {
+    private boolean checkPermissionAndCooldown(org.bukkit.entity.Player player) {
         if (!player.hasPermission("shulkerplus.use")) {
-            player.sendMessage(ChatColor.RED + "You don't have permission to use ShulkerPlus.");
+            player.sendMessage(String.valueOf(ChatColor.RED) + "You don't have permission to use ShulkerPlus.");
             return false;
         }
-        Long last = cooldowns.get(player.getUniqueId());
-        if (last != null && System.currentTimeMillis() - last < cooldownMs) {
+        Long last = this.cooldowns.get(player.getUniqueId());
+        if (last != null && System.currentTimeMillis() - last < this.cooldownMs) {
             return false;
         }
-        cooldowns.put(player.getUniqueId(), System.currentTimeMillis());
+        this.cooldowns.put(player.getUniqueId(), System.currentTimeMillis());
         return true;
     }
 
-    // ─── NMS openers ───────────────────────────────────────────
+    private void openNmsWorkbench(org.bukkit.entity.Player player) {
+        ServerPlayer sp = ((CraftPlayer)player).getHandle();
+        ContainerLevelAccess access = ContainerLevelAccess.create((Level)sp.level(), (BlockPos)sp.blockPosition());
+        sp.openMenu((MenuProvider)new SimpleMenuProvider((syncId, inv, p) -> new CraftingMenu(this, syncId, inv, access){
 
-    private void openNmsWorkbench(Player player) {
-        ServerPlayer sp = ((CraftPlayer) player).getHandle();
-        ContainerLevelAccess access = ContainerLevelAccess.create(sp.level(), sp.blockPosition());
-        sp.openMenu(new SimpleMenuProvider(
-            (syncId, inv, p) -> new CraftingMenu(syncId, inv, access) {
-                @Override
-                public boolean stillValid(net.minecraft.world.entity.player.Player p) {
-                    return !p.isRemoved();
-                }
-            },
-            Component.literal("工作台")
-        ));
+            public boolean stillValid(Player p) {
+                return !p.isRemoved();
+            }
+        }, (Component)Component.literal((String)"\u5de5\u4f5c\u53f0")));
     }
 
-    private void openNmsStonecutter(Player player) {
-        ServerPlayer sp = ((CraftPlayer) player).getHandle();
-        ContainerLevelAccess access = ContainerLevelAccess.create(sp.level(), sp.blockPosition());
-        sp.openMenu(new SimpleMenuProvider(
-            (syncId, inv, p) -> new StonecutterMenu(syncId, inv, access) {
-                @Override
-                public boolean stillValid(net.minecraft.world.entity.player.Player p) {
-                    return !p.isRemoved();
-                }
-            },
-            Component.literal("切石机")
-        ));
+    private void openNmsStonecutter(org.bukkit.entity.Player player) {
+        ServerPlayer sp = ((CraftPlayer)player).getHandle();
+        ContainerLevelAccess access = ContainerLevelAccess.create((Level)sp.level(), (BlockPos)sp.blockPosition());
+        sp.openMenu((MenuProvider)new SimpleMenuProvider((syncId, inv, p) -> new StonecutterMenu(this, syncId, inv, access){
+
+            public boolean stillValid(Player p) {
+                return !p.isRemoved();
+            }
+        }, (Component)Component.literal((String)"\u5207\u77f3\u673a")));
     }
 
-    private void openEnderChest(Player player) {
+    private void openEnderChest(org.bukkit.entity.Player player) {
         InventoryView view = player.openInventory(player.getEnderChest());
-        view.setTitle("末影箱");
+        view.setTitle("\u672b\u5f71\u7bb1");
     }
 
     private String localizeDefaultGuiTitle(String title) {
-        if (title == null) return null;
+        if (title == null) {
+            return null;
+        }
         return switch (title) {
-            case "Chest" -> "箱子";
-            case "Large Chest" -> "大箱子";
-            case "Shulker Box" -> "潜影盒";
-            case "Ender Chest" -> "末影箱";
-            case "Crafting", "Crafting Table" -> "工作台";
-            case "Stonecutter" -> "切石机";
-            case "Barrel" -> "木桶";
-            case "Furnace" -> "熔炉";
-            case "Blast Furnace" -> "高炉";
-            case "Smoker" -> "烟熏炉";
-            case "Brewing Stand" -> "酿造台";
-            case "Dispenser" -> "发射器";
-            case "Dropper" -> "投掷器";
-            case "Hopper" -> "漏斗";
-            case "Anvil" -> "铁砧";
-            case "Enchanting" -> "附魔台";
-            case "Beacon" -> "信标";
-            case "Loom" -> "织布机";
-            case "Cartography Table" -> "制图台";
-            case "Grindstone", "Repair & Disenchant" -> "砂轮";
-            case "Smithing Table" -> "锻造台";
-            case "Trading" -> "交易";
+            case "Chest" -> "\u7bb1\u5b50";
+            case "Large Chest" -> "\u5927\u7bb1\u5b50";
+            case "Shulker Box" -> "\u6f5c\u5f71\u76d2";
+            case "Ender Chest" -> "\u672b\u5f71\u7bb1";
+            case "Crafting", "Crafting Table" -> "\u5de5\u4f5c\u53f0";
+            case "Stonecutter" -> "\u5207\u77f3\u673a";
+            case "Barrel" -> "\u6728\u6876";
+            case "Furnace" -> "\u7194\u7089";
+            case "Blast Furnace" -> "\u9ad8\u7089";
+            case "Smoker" -> "\u70df\u718f\u7089";
+            case "Brewing Stand" -> "\u917f\u9020\u53f0";
+            case "Dispenser" -> "\u53d1\u5c04\u5668";
+            case "Dropper" -> "\u6295\u63b7\u5668";
+            case "Hopper" -> "\u6f0f\u6597";
+            case "Anvil" -> "\u94c1\u7827";
+            case "Enchanting" -> "\u9644\u9b54\u53f0";
+            case "Beacon" -> "\u4fe1\u6807";
+            case "Loom" -> "\u7ec7\u5e03\u673a";
+            case "Cartography Table" -> "\u5236\u56fe\u53f0";
+            case "Grindstone", "Repair & Disenchant" -> "\u7802\u8f6e";
+            case "Smithing Table" -> "\u953b\u9020\u53f0";
+            case "Trading" -> "\u4ea4\u6613";
             default -> title;
         };
     }
 
-    // ─── Bundle logic ───────────────────────────────────────────
-
-    private boolean tryBundle(InventoryClickEvent event, Player player) {
-        if (event.getClick() != ClickType.RIGHT) return false;
-
+    private boolean tryBundle(InventoryClickEvent event, org.bukkit.entity.Player player) {
+        boolean currentIsShulker;
+        boolean clickedTop;
+        if (event.getClick() != ClickType.RIGHT) {
+            return false;
+        }
         boolean clickedBottom = event.getClickedInventory() == event.getView().getBottomInventory();
-        boolean clickedTop = event.getClickedInventory() == event.getView().getTopInventory();
-        if (!clickedBottom && !clickedTop) return false;
-
-        // Guard: don't allow bundle mode on our own virtual shulker UI or ender chest
+        boolean bl = clickedTop = event.getClickedInventory() == event.getView().getTopInventory();
+        if (!clickedBottom && !clickedTop) {
+            return false;
+        }
         if (clickedTop) {
-            Session session = sessions.get(player.getUniqueId());
-            if (session != null && session.virtualInv != null
-                    && event.getClickedInventory().equals(session.virtualInv)) {
+            Session session = this.sessions.get(player.getUniqueId());
+            if (session != null && session.virtualInv != null && event.getClickedInventory().equals((Object)session.virtualInv)) {
                 return false;
             }
             if (event.getView().getTopInventory().getType() == InventoryType.ENDER_CHEST) {
                 return false;
             }
         }
-
         ItemStack cursor = event.getCursor();
         ItemStack current = event.getCurrentItem();
         boolean cursorIsShulker = cursor != null && SHULKER_BOXES.contains(cursor.getType());
-        boolean currentIsShulker = current != null && SHULKER_BOXES.contains(current.getType());
-
-        // Insert: cursor has shulker, clicked slot has non-shulker item
-        if (cursorIsShulker && current != null && !current.getType().isAir()
-                && !SHULKER_BOXES.contains(current.getType())) {
+        boolean bl2 = currentIsShulker = current != null && SHULKER_BOXES.contains(current.getType());
+        if (cursorIsShulker && current != null && !current.getType().isAir() && !SHULKER_BOXES.contains(current.getType())) {
             event.setCancelled(true);
-            bundleInsert(cursor, current);
-            if (clickedTop) event.getClickedInventory().setItem(event.getSlot(), current);
+            this.bundleInsert(cursor, current);
+            if (clickedTop) {
+                event.getClickedInventory().setItem(event.getSlot(), current);
+            }
             return true;
         }
-        // Extract: cursor has shulker, clicked slot is empty
         if (cursorIsShulker && (current == null || current.getType().isAir())) {
             event.setCancelled(true);
             int slot = event.getSlot();
-            Inventory targetInv = clickedBottom ? player.getInventory() : event.getClickedInventory();
-            bundleExtract(player, cursor, targetInv, slot);
+            PlayerInventory targetInv = clickedBottom ? player.getInventory() : event.getClickedInventory();
+            this.bundleExtract(player, cursor, (Inventory)targetInv, slot);
             return true;
         }
-        // Insert reverse: cursor has item, clicked slot is shulker
         if (!cursorIsShulker && currentIsShulker && cursor != null && !cursor.getType().isAir()) {
             event.setCancelled(true);
-            bundleInsert(current, cursor);
-            if (clickedTop) event.getClickedInventory().setItem(event.getSlot(), current);
+            this.bundleInsert(current, cursor);
+            if (clickedTop) {
+                event.getClickedInventory().setItem(event.getSlot(), current);
+            }
             return true;
         }
         return false;
     }
 
     private void bundleInsert(ItemStack shulker, ItemStack toInsert) {
-        if (SHULKER_BOXES.contains(toInsert.getType())) return;
+        ItemStack slot;
+        int i;
+        if (SHULKER_BOXES.contains(toInsert.getType())) {
+            return;
+        }
         ItemMeta meta = shulker.getItemMeta();
-        if (!(meta instanceof BlockStateMeta bsm)) return;
-        if (!(bsm.getBlockState() instanceof ShulkerBox box)) return;
+        if (!(meta instanceof BlockStateMeta)) {
+            return;
+        }
+        BlockStateMeta bsm = (BlockStateMeta)meta;
+        BlockState blockState = bsm.getBlockState();
+        if (!(blockState instanceof ShulkerBox)) {
+            return;
+        }
+        ShulkerBox box = (ShulkerBox)blockState;
         Inventory inv = box.getInventory();
-
         int remaining = toInsert.getAmount();
-        // Merge into existing stacks
-        for (int i = 0; i < 27 && remaining > 0; i++) {
-            ItemStack slot = inv.getItem(i);
-            if (slot != null && slot.isSimilar(toInsert)) {
-                int canFit = slot.getMaxStackSize() - slot.getAmount();
-                int add = Math.min(canFit, remaining);
-                slot.setAmount(slot.getAmount() + add);
-                remaining -= add;
-            }
+        for (i = 0; i < 27 && remaining > 0; ++i) {
+            slot = inv.getItem(i);
+            if (slot == null || !slot.isSimilar(toInsert)) continue;
+            int canFit = slot.getMaxStackSize() - slot.getAmount();
+            int add = Math.min(canFit, remaining);
+            slot.setAmount(slot.getAmount() + add);
+            remaining -= add;
         }
-        // Fill empty slots
-        for (int i = 0; i < 27 && remaining > 0; i++) {
-            ItemStack slot = inv.getItem(i);
-            if (slot == null || slot.getType().isAir()) {
-                ItemStack newStack = toInsert.clone();
-                newStack.setAmount(remaining);
-                inv.setItem(i, newStack);
-                remaining = 0;
-            }
+        for (i = 0; i < 27 && remaining > 0; ++i) {
+            slot = inv.getItem(i);
+            if (slot != null && !slot.getType().isAir()) continue;
+            ItemStack newStack = toInsert.clone();
+            newStack.setAmount(remaining);
+            inv.setItem(i, newStack);
+            remaining = 0;
         }
-
-        bsm.setBlockState(box);
-        shulker.setItemMeta(bsm);
+        bsm.setBlockState((BlockState)box);
+        shulker.setItemMeta((ItemMeta)bsm);
         toInsert.setAmount(remaining);
     }
 
-    private void bundleExtract(Player player, ItemStack shulker, Inventory targetInv, int targetSlot) {
+    private void bundleExtract(org.bukkit.entity.Player player, ItemStack shulker, Inventory targetInv, int targetSlot) {
         ItemMeta meta = shulker.getItemMeta();
-        if (!(meta instanceof BlockStateMeta bsm)) return;
-        if (!(bsm.getBlockState() instanceof ShulkerBox box)) return;
+        if (!(meta instanceof BlockStateMeta)) {
+            return;
+        }
+        BlockStateMeta bsm = (BlockStateMeta)meta;
+        BlockState blockState = bsm.getBlockState();
+        if (!(blockState instanceof ShulkerBox)) {
+            return;
+        }
+        ShulkerBox box = (ShulkerBox)blockState;
         Inventory inv = box.getInventory();
-
-        // Find last non-empty slot
         ItemStack extracted = null;
         int fromSlot = -1;
-        for (int i = 26; i >= 0; i--) {
+        for (int i = 26; i >= 0; --i) {
             ItemStack slot = inv.getItem(i);
-            if (slot != null && !slot.getType().isAir()) {
-                extracted = slot.clone();
-                slot.setAmount(0);
-                fromSlot = i;
-                break;
-            }
+            if (slot == null || slot.getType().isAir()) continue;
+            extracted = slot.clone();
+            slot.setAmount(0);
+            fromSlot = i;
+            break;
         }
-
-        if (extracted == null) return;
-
-        bsm.setBlockState(box);
-        shulker.setItemMeta(bsm);
-
-        if (targetSlot < 0 || targetSlot >= targetInv.getSize()) return;
+        if (extracted == null) {
+            return;
+        }
+        bsm.setBlockState((BlockState)box);
+        shulker.setItemMeta((ItemMeta)bsm);
+        if (targetSlot < 0 || targetSlot >= targetInv.getSize()) {
+            return;
+        }
         targetInv.setItem(targetSlot, extracted);
     }
 
-    // ─── Unified open entry ─────────────────────────────────────
-
-    /**
-     * Opens a shulker box GUI whose NMS container rejects shulker boxes at the slot level.
-     * Returns the Bukkit Inventory wrapping the NMS container.
-     */
-    private Inventory openShulkerGUI(Player player, String title, ItemStack sourceItem) {
-        ServerPlayer sp = ((CraftPlayer) player).getHandle();
-
+    private Inventory openShulkerGUI(org.bukkit.entity.Player player, String title, ItemStack sourceItem) {
+        BlockStateMeta bsm;
+        BlockState blockState;
+        ItemMeta itemMeta;
+        ServerPlayer sp = ((CraftPlayer)player).getHandle();
         SimpleContainer nms = new SimpleContainer(27);
-
-        // Populate from source item
-        if (sourceItem.hasItemMeta() && sourceItem.getItemMeta() instanceof BlockStateMeta bsm) {
-            if (bsm.getBlockState() instanceof ShulkerBox box) {
-                org.bukkit.inventory.ItemStack[] contents = box.getInventory().getContents();
-                for (int i = 0; i < 27 && i < contents.length; i++) {
-                    if (contents[i] != null && !contents[i].getType().isAir()) {
-                        nms.setItem(i, CraftItemStack.asNMSCopy(contents[i]));
-                    }
-                }
+        if (sourceItem.hasItemMeta() && (itemMeta = sourceItem.getItemMeta()) instanceof BlockStateMeta && (blockState = (bsm = (BlockStateMeta)itemMeta).getBlockState()) instanceof ShulkerBox) {
+            ShulkerBox box = (ShulkerBox)blockState;
+            ItemStack[] contents = box.getInventory().getContents();
+            for (int i = 0; i < 27 && i < contents.length; ++i) {
+                if (contents[i] == null || contents[i].getType().isAir()) continue;
+                nms.setItem(i, CraftItemStack.asNMSCopy((ItemStack)contents[i]));
             }
         }
-
-        sp.openMenu(new SimpleMenuProvider(
-            (syncId, inv, p) -> new ShulkerBoxMenu(syncId, inv, nms),
-            Component.literal(title)
-        ));
-
+        sp.openMenu((MenuProvider)new SimpleMenuProvider((syncId, inv, p) -> new ShulkerBoxMenu(syncId, inv, (Container)nms), (Component)Component.literal((String)title)));
         return player.getOpenInventory().getTopInventory();
     }
 
-    /**
-     * Opens the item for the player. Routes to virtual inv (shulker)
-     * or NMS menu (workbench/stonecutter).
-     */
-    private void openItem(Player player, OpenableType type, ItemStack sourceItem,
-                          int hotbarSlot, EquipmentSlot hand) {
-        UUID itemId = getOrCreateItemId(sourceItem);
-        // getOrCreateItemId writes to the ItemStack, but event.getItem() may return a copy.
-        // Persist back to the player's actual inventory slot so the UUID is visible to lock checks.
-        int srcSlot = (hand == EquipmentSlot.HAND) ? hotbarSlot : 40;
+    private void openItem(org.bukkit.entity.Player player, OpenableType type, ItemStack sourceItem, int hotbarSlot, EquipmentSlot hand) {
+        UUID itemId = this.getOrCreateItemId(sourceItem);
+        int srcSlot = hand == EquipmentSlot.HAND ? hotbarSlot : 40;
         player.getInventory().setItem(srcSlot, sourceItem);
-
         Inventory virtualInv = null;
         if (type == OpenableType.SHULKER) {
-            String title = sourceItem.hasItemMeta() && sourceItem.getItemMeta().hasDisplayName()
-                ? sourceItem.getItemMeta().getDisplayName() : "潜影盒";
-            virtualInv = openShulkerGUI(player, title, sourceItem);
-            if (playSounds) {
-                player.playSound(player.getLocation(),
-                    Sound.BLOCK_SHULKER_BOX_OPEN, 1f, 1f);
+            String title = sourceItem.hasItemMeta() && sourceItem.getItemMeta().hasDisplayName() ? sourceItem.getItemMeta().getDisplayName() : "\u6f5c\u5f71\u76d2";
+            virtualInv = this.openShulkerGUI(player, title, sourceItem);
+            if (this.playSounds) {
+                player.playSound(player.getLocation(), Sound.BLOCK_SHULKER_BOX_OPEN, 1.0f, 1.0f);
             }
         }
-
         Session session = new Session(type, hand, virtualInv, sourceItem, hotbarSlot, itemId);
-        sessions.put(player.getUniqueId(), session);
-
+        this.sessions.put(player.getUniqueId(), session);
         switch (type) {
-            case WORKBENCH:
-                openNmsWorkbench(player);
+            case WORKBENCH: {
+                this.openNmsWorkbench(player);
                 break;
-            case STONECUTTER:
-                openNmsStonecutter(player);
+            }
+            case STONECUTTER: {
+                this.openNmsStonecutter(player);
                 break;
-            case ENDER_CHEST:
-                openEnderChest(player);
-                if (playSounds) player.playSound(player.getLocation(), Sound.BLOCK_ENDER_CHEST_OPEN, 1f, 1f);
-                break;
+            }
+            case ENDER_CHEST: {
+                this.openEnderChest(player);
+                if (!this.playSounds) break;
+                player.playSound(player.getLocation(), Sound.BLOCK_ENDER_CHEST_OPEN, 1.0f, 1.0f);
+            }
         }
     }
-
-    // ─── Events ────────────────────────────────────────────────
 
     @EventHandler
     public void onInteract(PlayerInteractEvent event) {
-        if (event.getHand() == null) return;
+        if (event.getAction() != Action.RIGHT_CLICK_AIR) {
+            return;
+        }
+        if (event.getHand() != EquipmentSlot.HAND) {
+            return;
+        }
         ItemStack item = event.getItem();
-        if (!isOpenable(item)) return;
-
-        Player player = event.getPlayer();
-        if (!checkPermissionAndCooldown(player)) return;
-        if (requireSneak && !player.isSneaking()) return;
-
-        Action action = event.getAction();
-        if (action != Action.RIGHT_CLICK_AIR && action != Action.RIGHT_CLICK_BLOCK) return;
-
-        if (action == Action.RIGHT_CLICK_BLOCK) {
-            Material clicked = event.getClickedBlock().getType();
-            if (clicked.isInteractable()) return;
+        if (!this.isOpenable(item)) {
+            return;
         }
-
+        org.bukkit.entity.Player player = event.getPlayer();
+        OpenableType type = this.getOpenableType(item);
+        if (!this.checkPermissionAndCooldown(player)) {
+            return;
+        }
         event.setCancelled(true);
-        OpenableType type = getOpenableType(item);
         EquipmentSlot hand = event.getHand();
-        int hotbarSlot = (hand == EquipmentSlot.HAND) ? player.getInventory().getHeldItemSlot() : -1;
-
-        Bukkit.getScheduler().runTask(this, () ->
-            openItem(player, type, item, hotbarSlot, hand));
+        int hotbarSlot = hand == EquipmentSlot.HAND ? player.getInventory().getHeldItemSlot() : -1;
+        Bukkit.getScheduler().runTask((Plugin)this, () -> this.openItem(player, type, item, hotbarSlot, hand));
     }
 
-    @EventHandler(priority = EventPriority.LOWEST)
+    @EventHandler(priority=EventPriority.LOWEST)
     public void onClick(InventoryClickEvent event) {
-        if (!(event.getWhoClicked() instanceof Player player)) return;
-
-        // Block itemscroller race: recently closed session, still getting auto-move packets
-        Session closing = closingSessions.get(player.getUniqueId());
-        if (closing != null) {
-            if (event.getAction() == InventoryAction.MOVE_TO_OTHER_INVENTORY ||
-                event.getAction() == InventoryAction.HOTBAR_SWAP) {
-                event.setCancelled(true);
-                return;
-            }
-        }
-
-        if (enableBundleMode && tryBundle(event, player)) return;
-
-        Session session = sessions.get(player.getUniqueId());
-
-        // CASE 1: Our virtual shulker UI
-        if (session != null && session.virtualInv != null
-                && event.getView().getTopInventory().equals(session.virtualInv)) {
-            handleClickInOurUI(event, player, session);
+        HumanEntity humanEntity = event.getWhoClicked();
+        if (!(humanEntity instanceof org.bukkit.entity.Player)) {
             return;
         }
-
-        // CASE 2: NMS menu (workbench/stonecutter)
+        org.bukkit.entity.Player player = (org.bukkit.entity.Player)humanEntity;
+        Session closing = this.closingSessions.get(player.getUniqueId());
+        if (closing != null && (event.getAction() == InventoryAction.MOVE_TO_OTHER_INVENTORY || event.getAction() == InventoryAction.HOTBAR_SWAP)) {
+            event.setCancelled(true);
+            return;
+        }
+        if (this.enableBundleMode && this.tryBundle(event, player)) {
+            return;
+        }
+        Session session = this.sessions.get(player.getUniqueId());
+        if (session != null && session.virtualInv != null && event.getView().getTopInventory().equals((Object)session.virtualInv)) {
+            this.handleClickInOurUI(event, player, session);
+            return;
+        }
         if (session != null && session.virtualInv == null) {
-            handleClickInNmsUI(event, player, session);
+            this.handleClickInNmsUI(event, player, session);
             return;
         }
-
-        // CASE 3: Vanilla container → nested open
-        if (enableNestedOpening && session == null && event.getView().getTopInventory() != null) {
-            handleClickInVanillaContainer(event, player);
+        if (this.enableNestedOpening && session == null && event.getView().getTopInventory() != null) {
+            this.handleClickInVanillaContainer(event, player);
         }
     }
 
-    private void handleClickInOurUI(InventoryClickEvent event, Player player, Session session) {
+    private void handleClickInOurUI(InventoryClickEvent event, org.bukkit.entity.Player player, Session session) {
+        ItemStack clickedItem;
         Inventory clicked = event.getClickedInventory();
-        if (clicked == null) return;
-
-        // Lock source item by slot position (primary – no PDC dependency)
-        if (clicked.equals(event.getView().getBottomInventory())) {
-            if (event.getSlot() == getSourceSlot(session)) {
+        if (clicked == null) {
+            return;
+        }
+        if (clicked.equals((Object)event.getView().getBottomInventory())) {
+            UUID clickedId;
+            if (event.getSlot() == this.getSourceSlot(session)) {
                 event.setCancelled(true);
                 return;
             }
-            // Fallback: UUID check
-            ItemStack clickedItem = event.getCurrentItem();
-            if (clickedItem != null) {
-                UUID clickedId = getItemId(clickedItem);
-                if (clickedId != null && clickedId.equals(session.itemId)) {
-                    event.setCancelled(true);
+            clickedItem = event.getCurrentItem();
+            if (clickedItem != null && (clickedId = this.getItemId(clickedItem)) != null && clickedId.equals(session.itemId)) {
+                event.setCancelled(true);
+                return;
+            }
+        }
+        if (this.enableNestedOpening && clicked.equals((Object)event.getView().getBottomInventory()) && this.isOpenable(clickedItem = event.getCurrentItem()) && event.getCursor().getType().isAir() && event.getClick() == ClickType.RIGHT) {
+            OpenableType newType = this.getOpenableType(clickedItem);
+            if (newType == null) {
+                return;
+            }
+            event.setCancelled(true);
+            this.syncToSource(player, session);
+            session.uiStack.push(new UIContext(session.type, session.virtualInv, session.sourceItem, session.hotbarSlot));
+            int slot = this.findSlotInInventory(player, clickedItem);
+            player.closeInventory();
+            Bukkit.getScheduler().runTask((Plugin)this, () -> {
+                Session newSession = this.createNestedSession(player, newType, clickedItem, slot, session);
+                if (newSession == null) {
+                    if (!session.uiStack.isEmpty()) {
+                        session.uiStack.pop();
+                    }
                     return;
                 }
-            }
+                this.openItemFromSession(player, newType, newSession, clickedItem, slot);
+            });
+            return;
         }
-
-        // Nested open
-        if (enableNestedOpening && clicked.equals(event.getView().getBottomInventory())) {
-            ItemStack clickedItem = event.getCurrentItem();
-            if (isOpenable(clickedItem) && event.getCursor().getType().isAir()
-                    && event.getClick() == ClickType.RIGHT) {
-                OpenableType newType = getOpenableType(clickedItem);
-                if (newType == null) return;
-
-                event.setCancelled(true);
-                syncToSource(player, session);
-
-                session.uiStack.push(new UIContext(
-                    session.type, session.virtualInv, session.sourceItem, session.hotbarSlot));
-
-                int slot = findSlotInInventory(player, clickedItem);
-
-                // Route through scheduler for clean close-open transition
-                player.closeInventory();
-                Bukkit.getScheduler().runTask(this, () -> {
-                    Session newSession = createNestedSession(
-                        player, newType, clickedItem, slot, session);
-                    if (newSession == null) {
-                        // Fallback: pop stack and restore
-                        if (!session.uiStack.isEmpty()) session.uiStack.pop();
-                        return;
-                    }
-                    openItemFromSession(player, newType, newSession, clickedItem, slot);
-                });
-                return;
-            }
-        }
-
-        // Real-time sync for shulker
         if (session.type == OpenableType.SHULKER) {
-            Bukkit.getScheduler().runTask(this, () -> {
-                Session s = sessions.get(player.getUniqueId());
-                if (s != null) syncToSource(player, s);
+            Bukkit.getScheduler().runTask((Plugin)this, () -> {
+                Session s = this.sessions.get(player.getUniqueId());
+                if (s != null) {
+                    this.syncToSource(player, s);
+                }
             });
         }
     }
 
-    private void handleClickInNmsUI(InventoryClickEvent event, Player player, Session session) {
-        // Lock source item: prevent ANY interaction while its GUI is open
+    private void handleClickInNmsUI(InventoryClickEvent event, org.bukkit.entity.Player player, Session session) {
         if (event.getClickedInventory() == event.getView().getBottomInventory()) {
-            if (event.getSlot() == getSourceSlot(session)) {
+            UUID clickedId;
+            if (event.getSlot() == this.getSourceSlot(session)) {
                 event.setCancelled(true);
                 return;
             }
-            // Fallback: UUID check
             ItemStack clickedItem = event.getCurrentItem();
-            if (clickedItem != null) {
-                UUID clickedId = getItemId(clickedItem);
-                if (clickedId != null && clickedId.equals(session.itemId)) {
-                    event.setCancelled(true);
+            if (clickedItem != null && (clickedId = this.getItemId(clickedItem)) != null && clickedId.equals(session.itemId)) {
+                event.setCancelled(true);
+                return;
+            }
+            if (this.isOpenable(clickedItem) && event.getCursor().getType().isAir() && event.getClick() == ClickType.RIGHT) {
+                OpenableType newType = this.getOpenableType(clickedItem);
+                if (newType == null) {
                     return;
                 }
-            }
-
-            // Nested open: right-click openable item in bottom inventory
-            if (isOpenable(clickedItem) && event.getCursor().getType().isAir()
-                    && event.getClick() == ClickType.RIGHT) {
-                OpenableType newType = getOpenableType(clickedItem);
-                if (newType == null) return;
-
                 event.setCancelled(true);
-                int slot = findSlotInInventory(player, clickedItem);
-                Session newSession = createNestedSession(player, newType, clickedItem, slot, session);
-
+                int slot = this.findSlotInInventory(player, clickedItem);
+                Session newSession = this.createNestedSession(player, newType, clickedItem, slot, session);
                 player.closeInventory();
-                Bukkit.getScheduler().runTask(this, () ->
-                    openItemFromSession(player, newType, newSession, clickedItem, slot));
+                Bukkit.getScheduler().runTask((Plugin)this, () -> this.openItemFromSession(player, newType, newSession, clickedItem, slot));
             }
         }
     }
 
-    private Session createNestedSession(Player player, OpenableType type, ItemStack item,
-                                         int slot, Session previousSession) {
-        UUID itemId = getOrCreateItemId(item);
-        // Virtual inv is created later in openItemFromSession via openShulkerGUI
-        Session newSession = new Session(type, previousSession.equipmentSlot,
-            null, item, slot, itemId);
+    private Session createNestedSession(org.bukkit.entity.Player player, OpenableType type, ItemStack item, int slot, Session previousSession) {
+        UUID itemId = this.getOrCreateItemId(item);
+        Session newSession = new Session(type, previousSession.equipmentSlot, null, item, slot, itemId);
         newSession.uiStack = previousSession.uiStack;
         newSession.returnToPlayerInventory = previousSession.returnToPlayerInventory;
         return newSession;
     }
 
-    private void openItemFromSession(Player player, OpenableType type,
-                                      Session session, ItemStack sourceItem, int slot) {
-        sessions.put(player.getUniqueId(), session);
+    private void openItemFromSession(org.bukkit.entity.Player player, OpenableType type, Session session, ItemStack sourceItem, int slot) {
+        this.sessions.put(player.getUniqueId(), session);
         switch (type) {
-            case SHULKER:
-                String title = sourceItem.hasItemMeta() && sourceItem.getItemMeta().hasDisplayName()
-                    ? sourceItem.getItemMeta().getDisplayName() : "潜影盒";
-                session.virtualInv = openShulkerGUI(player, title, sourceItem);
-                if (playSounds) {
-                    player.playSound(player.getLocation(),
-                        Sound.BLOCK_SHULKER_BOX_OPEN, 1f, 1f);
-                }
+            case SHULKER: {
+                String title = sourceItem.hasItemMeta() && sourceItem.getItemMeta().hasDisplayName() ? sourceItem.getItemMeta().getDisplayName() : "\u6f5c\u5f71\u76d2";
+                session.virtualInv = this.openShulkerGUI(player, title, sourceItem);
+                if (!this.playSounds) break;
+                player.playSound(player.getLocation(), Sound.BLOCK_SHULKER_BOX_OPEN, 1.0f, 1.0f);
                 break;
-            case WORKBENCH:
-                openNmsWorkbench(player);
+            }
+            case WORKBENCH: {
+                this.openNmsWorkbench(player);
                 break;
-            case STONECUTTER:
-                openNmsStonecutter(player);
+            }
+            case STONECUTTER: {
+                this.openNmsStonecutter(player);
                 break;
-            case ENDER_CHEST:
-                openEnderChest(player);
-                if (playSounds) player.playSound(player.getLocation(), Sound.BLOCK_ENDER_CHEST_OPEN, 1f, 1f);
-                break;
+            }
+            case ENDER_CHEST: {
+                this.openEnderChest(player);
+                if (!this.playSounds) break;
+                player.playSound(player.getLocation(), Sound.BLOCK_ENDER_CHEST_OPEN, 1.0f, 1.0f);
+            }
         }
     }
 
-    private void handleClickInVanillaContainer(InventoryClickEvent event, Player player) {
-        if (event.getClickedInventory() != event.getView().getBottomInventory()) return;
-        if (event.getClick() != ClickType.RIGHT) return;
-        if (!event.getCursor().getType().isAir()) return;
-
+    private void handleClickInVanillaContainer(InventoryClickEvent event, org.bukkit.entity.Player player) {
+        if (event.getClickedInventory() != event.getView().getBottomInventory()) {
+            return;
+        }
+        if (event.getClick() != ClickType.RIGHT) {
+            return;
+        }
+        if (!event.getCursor().getType().isAir()) {
+            return;
+        }
         ItemStack targetItem = event.getCurrentItem();
-        if (!isOpenable(targetItem)) return;
-        if (!checkPermissionAndCooldown(player)) return;
-
-        OpenableType type = getOpenableType(targetItem);
-        if (type == null) return;
-
+        if (!this.isOpenable(targetItem)) {
+            return;
+        }
+        if (!this.checkPermissionAndCooldown(player)) {
+            return;
+        }
+        OpenableType type = this.getOpenableType(targetItem);
+        if (type == null) {
+            return;
+        }
         event.setCancelled(true);
-        openItemFromInventoryView(player, type, targetItem, event.getSlot(),
-            event.getView());
+        this.openItemFromInventoryView(player, type, targetItem, event.getSlot(), event.getView());
     }
 
     @EventHandler
     public void onDrag(InventoryDragEvent event) {
-        if (!(event.getWhoClicked() instanceof Player player)) return;
-        Session session = sessions.get(player.getUniqueId());
-        if (session == null || session.type != OpenableType.SHULKER) return;
-        if (session.virtualInv == null) return;
-        if (!event.getInventory().equals(session.virtualInv)) return;
-
-        Bukkit.getScheduler().runTask(this, () -> {
-            Session s = sessions.get(player.getUniqueId());
-            if (s != null) syncToSource(player, s);
+        HumanEntity humanEntity = event.getWhoClicked();
+        if (!(humanEntity instanceof org.bukkit.entity.Player)) {
+            return;
+        }
+        org.bukkit.entity.Player player = (org.bukkit.entity.Player)humanEntity;
+        Session session = this.sessions.get(player.getUniqueId());
+        if (session == null || session.type != OpenableType.SHULKER) {
+            return;
+        }
+        if (session.virtualInv == null) {
+            return;
+        }
+        if (!event.getInventory().equals((Object)session.virtualInv)) {
+            return;
+        }
+        Bukkit.getScheduler().runTask((Plugin)this, () -> {
+            Session s = this.sessions.get(player.getUniqueId());
+            if (s != null) {
+                this.syncToSource(player, s);
+            }
         });
     }
 
     @EventHandler
     public void onClose(InventoryCloseEvent event) {
-        if (!(event.getPlayer() instanceof Player player)) return;
-        Session session = sessions.get(player.getUniqueId());
-        if (session == null) return;
-
-        // Match close against the correct inventory
-        switch (session.type) {
-            case SHULKER:
-                if (session.virtualInv == null) return;
-                if (!event.getInventory().equals(session.virtualInv)) return;
-                break;
-            case WORKBENCH:
-                if (event.getInventory().getType() != InventoryType.WORKBENCH) return;
-                break;
-            case STONECUTTER:
-                if (event.getInventory().getType() != InventoryType.STONECUTTER) return;
-                break;
-            case ENDER_CHEST:
-                if (event.getInventory().getType() != InventoryType.ENDER_CHEST) return;
-                break;
+        HumanEntity humanEntity = event.getPlayer();
+        if (!(humanEntity instanceof org.bukkit.entity.Player)) {
+            return;
         }
-
-        syncToSource(player, session);
-        scheduleSourceIntegrityCheck(player, session, event.getInventory());
-
-        // Keep session alive briefly to block in-flight itemscroller auto-move packets
+        org.bukkit.entity.Player player = (org.bukkit.entity.Player)humanEntity;
+        Session session = this.sessions.get(player.getUniqueId());
+        if (session == null) {
+            return;
+        }
+        switch (session.type) {
+            case SHULKER: {
+                if (session.virtualInv == null) {
+                    return;
+                }
+                if (event.getInventory().equals((Object)session.virtualInv)) break;
+                return;
+            }
+            case WORKBENCH: {
+                if (event.getInventory().getType() == InventoryType.WORKBENCH) break;
+                return;
+            }
+            case STONECUTTER: {
+                if (event.getInventory().getType() == InventoryType.STONECUTTER) break;
+                return;
+            }
+            case ENDER_CHEST: {
+                if (event.getInventory().getType() == InventoryType.ENDER_CHEST) break;
+                return;
+            }
+        }
+        this.syncToSource(player, session);
+        this.scheduleSourceIntegrityCheck(player, session, event.getInventory());
         UUID playerId = player.getUniqueId();
-        closingSessions.put(playerId, session);
-        Bukkit.getScheduler().runTaskLater(this, () -> closingSessions.remove(playerId), 2L);
-
+        this.closingSessions.put(playerId, session);
+        Bukkit.getScheduler().runTaskLater((Plugin)this, () -> this.closingSessions.remove(playerId), 2L);
         if (!session.uiStack.isEmpty()) {
             UIContext prev = session.uiStack.pop();
-            sessions.remove(playerId);
-
+            this.sessions.remove(playerId);
             if (prev.isVanilla) {
-                Bukkit.getScheduler().runTask(this, () -> {
+                Bukkit.getScheduler().runTask((Plugin)this, () -> {
                     try {
                         InventoryView restoredView = player.openInventory(prev.topInventory);
-                        String localizedTitle = localizeDefaultGuiTitle(prev.title);
+                        String localizedTitle = this.localizeDefaultGuiTitle(prev.title);
                         if (localizedTitle != null && !localizedTitle.equals(prev.title)) {
                             restoredView.setTitle(localizedTitle);
                         }
-                    } catch (Exception ignored) {}
+                    }
+                    catch (Exception exception) {
+                        // empty catch block
+                    }
                 });
                 return;
             }
-
-            Session restored = new Session(prev.type, session.equipmentSlot,
-                prev.topInventory, prev.sourceItem, prev.sourceSlot,
-                getOrCreateItemId(prev.sourceItem));
+            Session restored = new Session(prev.type, session.equipmentSlot, prev.topInventory, prev.sourceItem, prev.sourceSlot, this.getOrCreateItemId(prev.sourceItem));
             restored.uiStack = session.uiStack;
             restored.returnToPlayerInventory = session.returnToPlayerInventory;
-            sessions.put(player.getUniqueId(), restored);
-
-            Bukkit.getScheduler().runTask(this, () -> {
+            this.sessions.put(player.getUniqueId(), restored);
+            Bukkit.getScheduler().runTask((Plugin)this, () -> {
                 player.openInventory(prev.topInventory);
-                if (playSounds && prev.type == OpenableType.SHULKER) {
-                    player.playSound(player.getLocation(),
-                        Sound.BLOCK_SHULKER_BOX_OPEN, 1f, 1f);
+                if (this.playSounds && prev.type == OpenableType.SHULKER) {
+                    player.playSound(player.getLocation(), Sound.BLOCK_SHULKER_BOX_OPEN, 1.0f, 1.0f);
                 }
             });
         } else {
-            sessions.remove(playerId);
-            if (session.type == OpenableType.SHULKER && playSounds) {
-                player.playSound(player.getLocation(),
-                    Sound.BLOCK_SHULKER_BOX_CLOSE, 1f, 1f);
+            this.sessions.remove(playerId);
+            if (session.type == OpenableType.SHULKER && this.playSounds) {
+                player.playSound(player.getLocation(), Sound.BLOCK_SHULKER_BOX_CLOSE, 1.0f, 1.0f);
             }
             if (session.returnToPlayerInventory) {
-                Bukkit.getScheduler().runTask(this, () ->
-                    openPlayerInventoryScreen(player));
+                Bukkit.getScheduler().runTask((Plugin)this, () -> this.openPlayerInventoryScreen(player));
             }
         }
     }
 
     @EventHandler
     public void onItemHeld(PlayerItemHeldEvent event) {
-        Session session = sessions.get(event.getPlayer().getUniqueId());
-        if (session == null || session.equipmentSlot != EquipmentSlot.HAND) return;
-        if (event.getNewSlot() == session.hotbarSlot) return;
-
-        syncToSource(event.getPlayer(), session);
+        Session session = this.sessions.get(event.getPlayer().getUniqueId());
+        if (session == null || session.equipmentSlot != EquipmentSlot.HAND) {
+            return;
+        }
+        if (event.getNewSlot() == session.hotbarSlot) {
+            return;
+        }
+        this.syncToSource(event.getPlayer(), session);
         event.getPlayer().closeInventory();
     }
 
     @EventHandler
     public void onSwapHand(PlayerSwapHandItemsEvent event) {
-        if (sessions.containsKey(event.getPlayer().getUniqueId())) {
+        if (this.sessions.containsKey(event.getPlayer().getUniqueId())) {
             event.setCancelled(true);
         }
     }
 
     @EventHandler
-    public void onMove(PlayerMoveEvent event) {
-        if (!closeOnMove) return;
-        Session session = sessions.get(event.getPlayer().getUniqueId());
-        if (session == null) return;
-        if (System.currentTimeMillis() - session.openedAt < 200) return;
-        if (event.getTo() == null) return;
-        if (event.getFrom().distanceSquared(event.getTo()) <= 0) return;
-
-        syncToSource(event.getPlayer(), session);
-        event.getPlayer().closeInventory();
-    }
-
-    @EventHandler
     public void onDrop(PlayerDropItemEvent event) {
-        Session session = sessions.get(event.getPlayer().getUniqueId());
-        if (session == null) return;
-        ItemStack source = findSourceItem(event.getPlayer(), session);
-        if (source != null && event.getItemDrop().getItemStack().equals(source)) {
+        Session session = this.sessions.get(event.getPlayer().getUniqueId());
+        if (session == null) {
+            return;
+        }
+        ItemStack source = this.findSourceItem(event.getPlayer(), session);
+        if (source != null && event.getItemDrop().getItemStack().equals((Object)source)) {
             event.setCancelled(true);
-            event.getPlayer().sendMessage(ChatColor.RED +
-                "You cannot drop this item while it's being used!");
+            event.getPlayer().sendMessage(String.valueOf(ChatColor.RED) + "You cannot drop this item while it's being used!");
         }
     }
 
     @EventHandler
     public void onBlockPlace(BlockPlaceEvent event) {
-        Session session = sessions.get(event.getPlayer().getUniqueId());
-        if (session == null) return;
-        if (isOpenable(event.getItemInHand())) {
+        Session session = this.sessions.get(event.getPlayer().getUniqueId());
+        if (session == null) {
+            return;
+        }
+        if (this.isOpenable(event.getItemInHand())) {
             event.setCancelled(true);
-            event.getPlayer().sendMessage(ChatColor.RED +
-                "You cannot place this item while it's being used!");
+            event.getPlayer().sendMessage(String.valueOf(ChatColor.RED) + "You cannot place this item while it's being used!");
         }
     }
 
     @EventHandler
     public void onQuit(PlayerQuitEvent event) {
-        Player player = event.getPlayer();
-        Session session = sessions.remove(player.getUniqueId());
+        org.bukkit.entity.Player player = event.getPlayer();
+        Session session = this.sessions.remove(player.getUniqueId());
         if (session != null) {
-            syncToSource(player, session);
+            this.syncToSource(player, session);
         }
-        cooldowns.remove(player.getUniqueId());
+        this.cooldowns.remove(player.getUniqueId());
     }
 
-    // ─── Cleanup task ──────────────────────────────────────────
+    static {
+        HashSet<Material> set = new HashSet<Material>();
+        for (Material m : Material.values()) {
+            String name = m.name();
+            if (!name.endsWith("SHULKER_BOX")) continue;
+            set.add(m);
+        }
+        SHULKER_BOXES = Collections.unmodifiableSet(set);
+    }
 
-    private class CleanupRunnable extends org.bukkit.scheduler.BukkitRunnable {
-        @Override
+    private class CleanupRunnable
+    extends BukkitRunnable {
+        private CleanupRunnable() {
+        }
+
         public void run() {
-            for (Iterator<Map.Entry<UUID, Session>> it = sessions.entrySet().iterator(); it.hasNext();) {
+            Iterator<Map.Entry<UUID, Session>> it = ShulkerPlus.this.sessions.entrySet().iterator();
+            while (it.hasNext()) {
                 Map.Entry<UUID, Session> entry = it.next();
                 UUID pid = entry.getKey();
                 Session session = entry.getValue();
-                Player player = Bukkit.getPlayer(pid);
-
+                org.bukkit.entity.Player player = Bukkit.getPlayer((UUID)pid);
                 if (player == null || !player.isOnline()) {
-                    syncToSourceDangling(pid, session);
+                    this.syncToSourceDangling(pid, session);
                     it.remove();
-                    cooldowns.remove(pid);
+                    ShulkerPlus.this.cooldowns.remove(pid);
                     continue;
                 }
-
                 InventoryView currentView = player.getOpenInventory();
-                if (currentView == null || currentView.getTopInventory() == null ||
-                    (session.virtualInv != null
-                        && !currentView.getTopInventory().equals(session.virtualInv))) {
-                    syncToSource(player, session);
-                    it.remove();
-                }
+                if (currentView != null && currentView.getTopInventory() != null && (session.virtualInv == null || currentView.getTopInventory().equals((Object)session.virtualInv))) continue;
+                ShulkerPlus.this.syncToSource(player, session);
+                it.remove();
             }
         }
 
         private void syncToSourceDangling(UUID pid, Session s) {
-            Player p = Bukkit.getPlayer(pid);
-            if (p == null) return;
-            syncToSource(p, s);
+            org.bukkit.entity.Player p = Bukkit.getPlayer((UUID)pid);
+            if (p == null) {
+                return;
+            }
+            ShulkerPlus.this.syncToSource(p, s);
         }
     }
 }
+

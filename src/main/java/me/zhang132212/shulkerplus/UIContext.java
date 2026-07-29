@@ -1,13 +1,18 @@
+/*
+ * Decompiled with CFR 0.152.
+ * 
+ * Could not load the following classes:
+ *  org.bukkit.inventory.Inventory
+ *  org.bukkit.inventory.InventoryView
+ *  org.bukkit.inventory.ItemStack
+ */
 package me.zhang132212.shulkerplus;
 
+import me.zhang132212.shulkerplus.OpenableType;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.InventoryView;
 import org.bukkit.inventory.ItemStack;
 
-/**
- * Represents a saved UI context for nested opening.
- * Can represent either our virtual inventory or a vanilla container.
- */
 public class UIContext {
     final OpenableType type;
     final Inventory topInventory;
@@ -34,3 +39,4 @@ public class UIContext {
         this.title = vanillaView.getTitle();
     }
 }
+
